@@ -1,0 +1,295 @@
+<title>Touchless UI Mockups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark booth-style page, deliberately single-theme. Stacked sections: layouts, clutch sequence, control states. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0c11;
+  --panel: #12151d;
+  --line: #262b38;
+  --fg: #e9ecf3;
+  --muted: #8a91a3;
+  --deck-a: #5ab0ff;
+  --deck-b: #ff7a90;
+  --armed: #f2f0ff;
+  --warn: #f5c04a;
+  --cam-1: #1b2130;
+  --cam-2: #0d1017;
+  --font-ui: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px; line-height: 1.5;
+}
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 56px; }
+header h1 { font-size: clamp(26px, 4vw, 36px); margin: 0 0 8px; letter-spacing: -0.02em; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 65ch; }
+h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+.layouts { display: grid; gap: 28px; }
+.option { display: grid; gap: 12px; }
+.option-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.option-head h3 { margin: 0; font-size: 17px; }
+.rec { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid var(--armed); color: var(--armed); padding: 2px 8px; border-radius: 999px; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 24px; color: var(--muted); font-size: 14px; }
+.notes b { color: var(--fg); font-weight: 600; }
+
+/* Fake camera frame */
+.frame { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 35%, var(--cam-1), var(--cam-2)); border: 1px solid var(--line); container-type: inline-size; }
+.frame .split { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px dashed rgba(255,255,255,0.10); }
+.frame .split-label { position: absolute; top: 50%; font-family: var(--font-mono); font-size: max(9px, 1.1cqw); letter-spacing: 0.14em; color: rgba(255,255,255,0.22); }
+.frame .split-label.a { right: calc(50% + 10px); }
+.frame .split-label.b { left: calc(50% + 10px); }
+.frame svg.hand { position: absolute; overflow: visible; }
+
+.status-pill { position: absolute; top: 2.2cqw; left: 50%; transform: translateX(-50%); display: flex; gap: 1.4cqw; align-items: center;
+  background: rgba(10,12,17,0.72); border: 1px solid var(--line); border-radius: 999px; padding: 0.6cqw 1.6cqw;
+  font-family: var(--font-mono); font-size: max(8px, 1.15cqw); color: var(--muted); white-space: nowrap; }
+.dot { display: inline-block; width: 0.8cqw; height: 0.8cqw; min-width: 5px; min-height: 5px; border-radius: 50%; background: #5fd38d; margin-right: 0.5cqw; vertical-align: middle; }
+
+/* Deck panels */
+.deck { position: absolute; background: rgba(10,12,17,0.74); border: 1px solid var(--line); border-radius: 1cqw;
+  padding: 1.2cqw; display: grid; gap: 0.9cqw; backdrop-filter: blur(6px); }
+.deck-title { font-family: var(--font-mono); font-size: max(8px, 1.1cqw); letter-spacing: 0.14em; display: flex; align-items: center; gap: 0.7cqw; }
+.deck-title i { width: 0.9cqw; height: 0.9cqw; min-width: 6px; min-height: 6px; border-radius: 2px; display: inline-block; }
+.row { display: flex; gap: 0.6cqw; flex-wrap: wrap; }
+.col { display: grid; gap: 0.6cqw; }
+.grp { display: grid; gap: 0.5cqw; }
+.grp-label { font-family: var(--font-mono); font-size: max(7px, 0.85cqw); letter-spacing: 0.12em; color: var(--muted); }
+
+.chip { font-family: var(--font-mono); font-weight: 600; font-size: max(8px, 1.05cqw); letter-spacing: 0.06em;
+  padding: 0.45cqw 0.9cqw; border-radius: 0.6cqw; border: 1px solid var(--line); color: var(--muted); position: relative; text-align: center; white-space: nowrap; }
+.chip.on { background: var(--c); border-color: var(--c); color: #0a0c11; }
+.chip.muted { text-decoration: line-through; color: #596074; border-style: solid; background: transparent; }
+.chip.unknown { border-style: dashed; color: #596074; }
+.chip.pending { border-color: var(--c); color: var(--c); animation: pulse 1.1s ease-in-out infinite; }
+.chip.unconfirmed { border-color: var(--warn); color: var(--fg); }
+.chip.unconfirmed::after { content: "!"; position: absolute; top: -0.7em; right: -0.6em; background: var(--warn); color: #0a0c11;
+  width: 1.4em; height: 1.4em; border-radius: 50%; font-size: 0.8em; display: grid; place-items: center; text-decoration: none; }
+.chip.blind::after { content: "BLIND"; position: absolute; top: -0.85em; right: -0.5em; background: #3a4052; color: var(--fg);
+  font-size: 0.6em; padding: 0 0.4em; border-radius: 3px; letter-spacing: 0.08em; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 0.35cqw color-mix(in srgb, var(--c) 30%, transparent); } }
+
+/* Bottom console */
+.console { position: absolute; left: 1.6cqw; right: 1.6cqw; bottom: 1.6cqw; display: grid; grid-template-columns: 1fr 1fr; gap: 1.2cqw; }
+.console .deck { position: static; grid-template-columns: auto 1fr 1fr; align-items: center; gap: 1.4cqw; }
+
+/* Clutch sequence */
+.seq { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.seq-tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; container-type: inline-size; min-width: 0; }
+.seq-tile .stage { aspect-ratio: 1 / 1; max-width: 100%; position: relative; border-radius: 8px; background: radial-gradient(90% 90% at 50% 40%, var(--cam-1), var(--cam-2)); overflow: hidden; }
+.seq-tile .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.seq-tile h4 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+.seq-tile h4 span { font-family: var(--font-mono); color: var(--muted); font-size: 11px; }
+.seq-tile p { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* State table */
+.states { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.state { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; align-content: start; container-type: inline-size; }
+.state .row { gap: 8px; padding-top: 6px; }
+.state .chip { font-size: 12px; padding: 4px 10px; border-radius: 6px; }
+.state h4 { margin: 0; font-size: 14px; }
+.state p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.ask { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; }
+.ask ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+
+@media (max-width: 760px) {
+  .seq { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .chip.pending { animation: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 30%, transparent); } }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Trackstar · touchless layer for the FLX2</div>
+    <h1>UI mockups</h1>
+    <p>Static mockups of the new browser UI. The dark gradient stands in for your camera feed. In every option the dashed line marks the deck split: a hand on the left half controls deck A, on the right half deck B.</p>
+  </header>
+
+  <section>
+    <h2>1. Where deck state lives</h2>
+    <p class="sub">The ring around each hand (section 2) is the same in all three. What differs is where loop and stem state sits. Each frame shows deck A with a 2-beat loop on and vocals muted, and deck B arming.</p>
+    <div class="layouts" id="layouts"></div>
+  </section>
+
+  <section>
+    <h2>2. Clutch feedback on the hand</h2>
+    <p class="sub">The ring follows your hand, so you never look away from it to know whether you are armed. This is one action from start to finish, which is why it is numbered.</p>
+    <div class="seq" id="seq"></div>
+  </section>
+
+  <section>
+    <h2>3. Control states</h2>
+    <p class="sub">Every loop and stem chip can be in one of these states. Pending and no-confirmation come from the feedback rule: state only changes when rekordbox says so.</p>
+    <div class="states" id="states"></div>
+  </section>
+
+  <section class="ask">
+    <h2>What I need from you</h2>
+    <ol>
+      <li>Pick a layout: A, B or C (or a mix, for example B with A's vertical stacking).</li>
+      <li>Does the ring sequence read clearly, or is anything there unclear or too busy?</li>
+      <li>Stems: lit means audible and struck-through means muted. Does that match how you think about it, or would you rather lit meant muted?</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+(function () {
+  // Approximate MediaPipe 21-point hand in a 200x240 box.
+  const BASE = {
+    0:[100,222], 1:[70,204], 2:[52,178], 3:[58,152], 4:[78,140],
+    5:[84,128], 9:[105,124], 13:[124,129], 17:[141,137],
+    14:[129,111], 15:[123,127], 16:[117,138],
+    18:[146,123], 19:[139,137], 20:[133,146]
+  };
+  const UP = { index:{6:[82,90],7:[80,64],8:[79,40]}, middle:{10:[106,84],11:[107,57],12:[108,32]} };
+  const DOWN = { index:{6:[87,108],7:[93,126],8:[97,137]}, middle:{10:[108,106],11:[113,125],12:[115,136]} };
+  const THUMB_OUT = {3:[40,148], 4:[28,126]};
+  const EDGES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+
+  function pts(pose) {
+    const p = Object.assign({}, BASE);
+    Object.assign(p, pose.index ? UP.index : DOWN.index, pose.middle ? UP.middle : DOWN.middle);
+    if (pose.thumbOut) Object.assign(p, THUMB_OUT);
+    return p;
+  }
+  const C = { a: 'var(--deck-a)', b: 'var(--deck-b)', armed: 'var(--armed)' };
+
+  // ring: {state: idle|armed|forming|fired|rearm, color, label, progress}
+  function handSVG(pose, ring) {
+    const p = pts(pose);
+    const lines = EDGES.map(([a,b]) => `<line x1="${p[a][0]}" y1="${p[a][1]}" x2="${p[b][0]}" y2="${p[b][1]}" stroke="rgba(233,236,243,0.55)" stroke-width="3" stroke-linecap="round"/>`).join('');
+    const dots = Object.values(p).map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="#e9ecf3"/>`).join('');
+    const cx = 100, cy = 128, r = 108, circ = 2 * Math.PI * r;
+    let ringEl = '', label = '';
+    const tag = (txt, color, fill) => `<g transform="translate(${cx},${cy + r + 20})"><rect x="-56" y="-14" width="112" height="26" rx="13" fill="${fill || 'rgba(10,12,17,0.85)'}" stroke="${color}" stroke-width="1.5"/><text x="0" y="4.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" letter-spacing="1.2" fill="${fill ? '#0a0c11' : color}">${txt}</text></g>`;
+    switch (ring.state) {
+      case 'idle':
+        ringEl = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(233,236,243,0.18)" stroke-width="2" stroke-dasharray="4 8"/>`;
+        break;
+      case 'armed':
+        ringEl = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${C.armed}" stroke-width="4" opacity="0.95"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${C.armed}" stroke-width="12" opacity="0.10"/>`;
+        label = tag('ARMED', C.armed);
+        break;
+      case 'forming': {
+        const len = circ * ring.progress;
+        ringEl = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${C.armed}" stroke-width="2" opacity="0.35"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ring.color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${len} ${circ}" transform="rotate(-90 ${cx} ${cy})"/>`;
+        label = tag(ring.label, ring.color);
+        break;
+      }
+      case 'fired':
+        ringEl = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${ring.color}" fill-opacity="0.12" stroke="${ring.color}" stroke-width="6"/>`;
+        label = tag(ring.label, ring.color, ring.color);
+        break;
+      case 'rearm':
+        ringEl = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(233,236,243,0.35)" stroke-width="2"/>`;
+        label = tag('CLOSE HAND', 'rgba(233,236,243,0.6)');
+        break;
+    }
+    return `${ringEl}${lines}${dots}${label}`;
+  }
+
+  function placeHand(pose, ring, leftPct, topPct, widthPct) {
+    return `<svg class="hand" viewBox="0 0 200 240" style="left:${leftPct}%;top:${topPct}%;width:${widthPct}%">${handSVG(pose, ring)}</svg>`;
+  }
+
+  function chip(text, state, color) {
+    return `<span class="chip ${state}" style="--c:${color}">${text}</span>`;
+  }
+  function loops(color, states) {
+    return ['1', '2', '4'].map((n, i) => chip(n + 'B', states[i], color)).join('');
+  }
+  function stems(color, states) {
+    return ['DRUMS', 'VOCALS', 'INST'].map((n, i) => chip(n, states[i], color)).join('');
+  }
+
+  const deckA = { color: C.a, loops: ['', 'on', ''], stems: ['on', 'muted', 'on'] };
+  const deckB = { color: C.b, loops: ['', '', ''], stems: ['on', 'on', 'on'] };
+
+  function deckTitle(name, color) { return `<div class="deck-title"><i style="background:${color}"></i>DECK ${name}</div>`; }
+
+  const scene = () => `
+    <div class="split"></div><span class="split-label a">DECK A</span><span class="split-label b">DECK B</span>
+    ${placeHand({ index: true, middle: true }, { state: 'fired', color: C.a, label: 'LOOP 2 ON' }, 24, 16, 18)}
+    ${placeHand({ index: false, middle: false }, { state: 'armed' }, 58, 18, 18)}
+    <div class="status-pill"><span><span class="dot"></span>OUT · Touchless Out</span><span><span class="dot"></span>IN · Touchless In</span><span>30 fps</span></div>`;
+
+  const layouts = [
+    {
+      key: 'A', name: 'Side rails',
+      html: () => `${scene()}
+        <div class="deck" style="left:1.6cqw;top:8cqw;bottom:1.6cqw;width:12cqw;align-content:start">
+          ${deckTitle('A', C.a)}
+          <div class="grp"><span class="grp-label">LOOP</span><div class="col">${loops(C.a, deckA.loops)}</div></div>
+          <div class="grp"><span class="grp-label">STEMS</span><div class="col">${stems(C.a, deckA.stems)}</div></div>
+        </div>
+        <div class="deck" style="right:1.6cqw;top:8cqw;bottom:1.6cqw;width:12cqw;align-content:start">
+          ${deckTitle('B', C.b)}
+          <div class="grp"><span class="grp-label">LOOP</span><div class="col">${loops(C.b, deckB.loops)}</div></div>
+          <div class="grp"><span class="grp-label">STEMS</span><div class="col">${stems(C.b, deckB.stems)}</div></div>
+        </div>`,
+      notes: ['<b>Good:</b> each deck\'s state sits on its own side, near the hand that controls it.', '<b>Cost:</b> the rails take width where your hands move, and big chips push the hands toward the centre.']
+    },
+    {
+      key: 'B', name: 'Bottom console', rec: true,
+      html: () => `${scene()}
+        <div class="console">
+          <div class="deck">${deckTitle('A', C.a)}<div class="grp"><span class="grp-label">LOOP</span><div class="row">${loops(C.a, deckA.loops)}</div></div><div class="grp"><span class="grp-label">STEMS</span><div class="row">${stems(C.a, deckA.stems)}</div></div></div>
+          <div class="deck">${deckTitle('B', C.b)}<div class="grp"><span class="grp-label">LOOP</span><div class="row">${loops(C.b, deckB.loops)}</div></div><div class="grp"><span class="grp-label">STEMS</span><div class="row">${stems(C.b, deckB.stems)}</div></div></div>
+        </div>`,
+      notes: ['<b>Good:</b> the camera area stays clear, and it reads like a mixer strip. Hands rarely drop into the bottom band.', '<b>Cost:</b> your eyes move down from your hands to check state, but the ring already tells you what just fired.']
+    },
+    {
+      key: 'C', name: 'Top corners',
+      html: () => `${scene().replace('status-pill"', 'status-pill" style="top:auto;bottom:2.2cqw"')}
+        <div class="deck" style="left:1.6cqw;top:1.6cqw">${deckTitle('A', C.a)}<div class="row">${loops(C.a, deckA.loops)}</div><div class="row">${stems(C.a, deckA.stems)}</div></div>
+        <div class="deck" style="right:1.6cqw;top:1.6cqw">${deckTitle('B', C.b)}<div class="row">${loops(C.b, deckB.loops)}</div><div class="row">${stems(C.b, deckB.stems)}</div></div>`,
+      notes: ['<b>Good:</b> compact, closest to the current layout, so the least to get used to.', '<b>Cost:</b> raised hands cover the top corners often, which is the same place the old UI fought with.']
+    }
+  ];
+
+  document.getElementById('layouts').innerHTML = layouts.map(l => `
+    <article class="option">
+      <div class="option-head"><span class="eyebrow">Option ${l.key}</span><h3>${l.name}</h3>${l.rec ? '<span class="rec">My pick</span>' : ''}</div>
+      <div class="frame">${l.html()}</div>
+      <div class="notes">${l.notes.map(n => `<div>${n}</div>`).join('')}</div>
+    </article>`).join('');
+
+  const seq = [
+    { t: 'Idle', pose: { index: false, middle: false, thumbOut: true }, ring: { state: 'idle' }, d: 'Thumb away from the index. Faint dashed ring. Nothing can fire.' },
+    { t: 'Armed', pose: { index: false, middle: false }, ring: { state: 'armed' }, d: 'Thumb pressed to the index knuckle with a fist. Solid ring.' },
+    { t: 'Forming', pose: { index: true, middle: true }, ring: { state: 'forming', color: C.a, label: 'LOOP 2', progress: 0.55 }, d: 'Pose recognised. The arc fills over the ~80ms hold and names the action.' },
+    { t: 'Fired', pose: { index: true, middle: true }, ring: { state: 'fired', color: C.a, label: 'LOOP 2 ON' }, d: 'Sent and confirmed by rekordbox. Flash in the deck colour.' },
+    { t: 'Rearm', pose: { index: true, middle: true }, ring: { state: 'rearm' }, d: 'Locked until you close back to the fist. Prevents chained misfires.' }
+  ];
+  document.getElementById('seq').innerHTML = seq.map((s, i) => `
+    <div class="seq-tile">
+      <div class="stage"><svg viewBox="-30 -10 260 290">${handSVG(s.pose, s.ring)}</svg></div>
+      <h4><span>${i + 1}</span>${s.t}</h4>
+      <p>${s.d}</p>
+    </div>`).join('');
+
+  const states = [
+    { t: 'Unknown', html: chip('2B', 'unknown', C.a) + chip('DRUMS', 'unknown', C.a), d: 'At launch, before rekordbox has reported anything.' },
+    { t: 'Loop off / stem audible', html: chip('2B', '', C.a) + chip('DRUMS', 'on', C.a), d: 'Loop off is outlined. A stem is lit while you can hear it.' },
+    { t: 'Loop on / stem muted', html: chip('2B', 'on', C.a) + chip('DRUMS', 'muted', C.a), d: 'Loop on fills. A muted stem is struck through.' },
+    { t: 'Pending', html: chip('2B', 'pending', C.a) + chip('DRUMS', 'pending', C.a), d: 'Sent, waiting for rekordbox. Usually a few milliseconds, so you rarely see it.' },
+    { t: 'No confirmation', html: chip('2B', 'unconfirmed', C.a) + chip('DRUMS', 'unconfirmed', C.a), d: 'Nothing came back within 300ms. Almost always a missing MIDI OUT mapping.' },
+    { t: 'Blind', html: chip('2B', 'on blind', C.a) + chip('INST', 'on blind', C.a), d: 'No feedback for this control, so the display is a best guess and may drift.' }
+  ];
+  document.getElementById('states').innerHTML = states.map(s => `
+    <div class="state"><h4>${s.t}</h4><div class="row">${s.html}</div><p>${s.d}</p></div>`).join('');
+})();
+</script>
