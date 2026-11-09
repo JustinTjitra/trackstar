@@ -1,0 +1,27 @@
+{
+  "name": "trackstar",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Touchless DJ controller: hand gestures to MIDI for rekordbox, built to sit next to a DDJ-FLX2.",
+  "type": "module",
+  "scripts": {
+    "fetch-assets": "node scripts/fetch-assets.mjs",
+    "predev": "npm run fetch-assets",
+    "dev": "vite",
+    "prebuild": "npm run fetch-assets",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.21"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "6.4.4",
+    "vitest": "4.1.12"
+  }
+}
