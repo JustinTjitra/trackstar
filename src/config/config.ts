@@ -32,7 +32,9 @@ export const DEFAULT_CONFIG: Config = Object.freeze({
   showSkeleton: true,
   cameraDim: 0.35,
   blind: Object.freeze({}),
-  invert: Object.freeze({}),
+  // rekordbox's ActiveStem functions light up while a stem is playing, the
+  // opposite of "muted", so stems are inverted by default.
+  invert: Object.freeze({ drums: true, vocals: true, inst: true }),
 }) as Config;
 
 export interface StorageLike {
@@ -72,7 +74,7 @@ export function loadConfig(storage: StorageLike | undefined = defaultStorage()):
       ...stored,
       poseMap: { ...base.poseMap, ...(stored.poseMap ?? {}) },
       blind: { ...(stored.blind ?? {}) },
-      invert: { ...(stored.invert ?? {}) },
+      invert: { ...base.invert, ...(stored.invert ?? {}) },
     };
   } catch {
     return base;

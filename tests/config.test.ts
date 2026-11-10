@@ -53,6 +53,13 @@ describe('config', () => {
     expect(() => saveConfig(DEFAULT_CONFIG, throwing)).not.toThrow();
   });
 
+  it('inverts stem feedback by default and keeps a stored override', () => {
+    expect(loadConfig(new MemStorage()).invert).toEqual({ drums: true, vocals: true, inst: true });
+    const s = new MemStorage();
+    s.setItem('trackstar.config.v1', JSON.stringify({ invert: { vocals: false } }));
+    expect(loadConfig(s).invert).toEqual({ drums: true, vocals: false, inst: true });
+  });
+
   it('does not share nested objects with the defaults', () => {
     const c = loadConfig(new MemStorage());
     c.poseMap.index = null;
