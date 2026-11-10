@@ -81,13 +81,14 @@ try {
     const unknown = await page.locator('.chip.unknown').count();
     if (unknown !== 12) errors.push(`expected all chips unknown before feedback, found ${unknown}`);
 
-    // rekordbox feedback: deck A loop 2 on (channel 3), deck B drums muted (channel 4).
-    // An echo of the app's own command on channel 1 must be ignored.
+    // rekordbox feedback: deck A loop 2 on (channel 3); deck B drums light off = muted,
+    // vocals light on = playing (ActiveStem lights while a stem plays). An echo of the
+    // app's own command on channel 1 must be ignored.
     await page.evaluate(() => {
       window.__midi.emit([0x90, 65, 127]);
       window.__midi.emit([0x92, 63, 127]);
-      window.__midi.emit([0x93, 70, 127]);
-      window.__midi.emit([0x93, 71, 0]);
+      window.__midi.emit([0x93, 70, 0]);
+      window.__midi.emit([0x93, 71, 127]);
     });
     const cls = (deck, action) => page.locator(`.chip[data-deck="${deck}"][data-action="${action}"]`).getAttribute('class');
     const checks = [
