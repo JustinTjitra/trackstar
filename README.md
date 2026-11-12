@@ -1,6 +1,6 @@
 [![Watch the demo](https://img.youtube.com/vi/HVagoIxUzM0/maxresdefault.jpg)](https://youtu.be/HVagoIxUzM0)
 
-# Trackstar
+# Trackstar (Previously fully in Python, currently migrating to Typescript + Vite stack)
 
 A touchless layer for DJing: hand gestures in front of a webcam become MIDI for rekordbox. It is built to sit **next to a controller** (developed with a Pioneer DDJ-FLX2), not to replace one. The controller keeps the faders, knobs, play and sync. Your hands get the loops and stems.
 
