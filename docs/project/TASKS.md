@@ -86,7 +86,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/synthAudio.test.ts`
 
 ### F001 Shared types and maths helpers
-- status: todo | type: agent | model: haiku | deps: none | gate: none
+- status: done | type: agent | model: haiku | deps: none | gate: none
 - files: `src/fx/types.ts`, `src/fx/dsp/math.ts`, `tests/fx/math.test.ts`
 - spec:
   - `types.ts`: `interface StereoEffect { process(l: Float32Array, r: Float32Array, frames: number): void; reset(): void }`, `interface TempoAware { setBpm(bpm: number): void }`, `type SceneSlot = 0 | 1 | 2 | 3 | 4`, `type SceneDirection = 'up' | 'down'`, `type ReleaseType = 'brake' | 'echo' | 'backspin'`, `type RollDivision = 1 | 0.5 | 0.25 | 0.125`.
