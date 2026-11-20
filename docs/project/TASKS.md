@@ -71,7 +71,7 @@ A gate is opened by the project owner editing this table. The loop never opens o
 All paths are relative to the repository root. Acceptance commands are run in addition to the full check suite.
 
 ### F000 Synthetic audio test helpers
-- status: todo | type: agent | model: haiku | deps: none | gate: none
+- status: done | type: agent | model: haiku | deps: none | gate: none
 - files: `tests/fixtures/synthAudio.ts`, `tests/fx/synthAudio.test.ts`
 - spec: export
   - `sine(freq: number, seconds: number, sampleRate: number, amp = 1): Float32Array`
