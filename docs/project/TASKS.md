@@ -95,7 +95,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/math.test.ts`
 
 ### F002 Parameter smoother
-- status: todo | type: agent | model: haiku | deps: F001 | gate: none
+- status: done | type: agent | model: haiku | deps: F001 | gate: none
 - files: `src/fx/dsp/smoother.ts`, `tests/fx/smoother.test.ts`
 - spec: `class Smoother { constructor(sampleRate: number, timeMs: number, initial = 0); setTarget(v: number): void; jump(v: number): void; next(): number; get value(): number; get target(): number; isSettled(eps = 1e-4): boolean }`. One-pole exponential: after `timeMs` the value has covered about 63% of a step.
 - tests: 63% point within 5% at 44100 and 48000; converges; `jump` is immediate; `next` with no target change returns the same value.

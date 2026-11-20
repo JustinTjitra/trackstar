@@ -12,3 +12,7 @@ Notes: first task, run by hand to prove the process before scheduling. Two delib
 ## 2026-11-20 22:45 UTC  F001 shared types and maths helpers  done
 Implementer: haiku, 1 attempt. Checks: typecheck, 169 tests, build, smoke all pass.
 Notes: three deliberate breakages (expLerp made linear, sanitize letting Infinity through, clamp without its NaN guard) each failed 2 tests. The planner reworded one doc comment on ReleaseType that described it wrongly.
+
+## 2026-11-20 23:44 UTC  F002 parameter smoother  done
+Implementer: haiku, 1 attempt. Checks: typecheck, 180 tests, build, smoke all pass.
+Notes: four deliberate breakages (time constant in seconds, jump not updating the target, no snap, NaN accepted as a target) were each caught. The class uses `#private` fields because plain private fields would clash with its `value` and `target` getters.
