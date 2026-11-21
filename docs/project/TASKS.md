@@ -223,11 +223,12 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/isolator.test.ts`
 
 ### F026 Beat roll
-- status: todo | type: agent | model: sonnet | deps: F010, F011 | gate: none
+- status: done | type: agent | model: sonnet | deps: F010, F011 | gate: none
 - files: `src/fx/effects/roll.ts`, `tests/fx/roll.test.ts`
 - spec: `class Roll implements StereoEffect, TempoAware { constructor(sampleRate: number, maxSeconds = 4); setBpm(bpm): void; start(division: RollDivision): void; stop(): void; get active(): boolean; process(...); reset() }`.
   - Input is always recorded. `start` freezes the most recent `division` beats into a preallocated loop buffer and repeats it until `stop`. If less audio has been recorded than requested, the slice is shortened; with none recorded, `start` does nothing.
   - 3 ms crossfade at the loop seam; 5 ms crossfade between live and roll on start and stop.
+  - As built: `start` freezes one beat plus the seam, so `start` with another division while rolling keeps the same frozen audio and only changes the loop length (all divisions end at the moment of the first `start`), with a 5 ms glide from the old loop. A `start` during the fade-out of a stopped roll freezes fresh audio.
   - Inactive: output equals input exactly.
 - tests: identity when inactive; after `start(0.5)` at 120 BPM and 48 kHz the output is periodic with period 12000 samples over three periods (outside the seam crossfade); the loop content matches the last 12000 input samples before `start`; after `stop` the output equals the live input within 10 ms.
 - accept: `npx vitest run tests/fx/roll.test.ts`
