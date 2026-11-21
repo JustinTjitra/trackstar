@@ -190,7 +190,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/echo.test.ts`
 
 ### F022 Noise sweep
-- status: todo | type: agent | model: sonnet | deps: F002, F005, F007 | gate: none
+- status: done | type: agent | model: sonnet | deps: F002, F005, F007 | gate: none
 - files: `src/fx/effects/noiseSweep.ts`, `tests/fx/noiseSweep.test.ts`
 - spec: `class NoiseSweep implements StereoEffect { constructor(sampleRate: number, seed = 7); setAmount(v: number): void; process(...); reset() }`. Adds band-passed white noise to the untouched dry signal. Noise level = 0.5 x amount squared. Band-pass centre moves geometrically from 300 Hz to 9 kHz with the amount (q 0.8). Left and right use different seeds.
 - tests: identity at amount 0; silence in at amount 1 gives output RMS between -20 and -3 dBFS; the share of energy above 4 kHz is higher at amount 0.9 than at 0.2; deterministic; left differs from right.
