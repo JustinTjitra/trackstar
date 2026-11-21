@@ -24,3 +24,7 @@ Notes: the planner's brief contained an error, which the implementer caught and 
 ## 2026-11-21 01:45 UTC  F004 biquad filter  done
 Implementer: sonnet, 1 attempt. Checks: typecheck, 221 tests, build, smoke all pass.
 Notes: no threshold in the brief needed changing. Six deliberate breakages by the planner (sign of a1, low-pass and high-pass swapped, band-pass peak gain, missing frequency clamp, partial reset, all-pass coefficients swapped) were each caught. The impulse response is checked against an independent direct-form reference to 1e-12.
+
+## 2026-11-21 02:50 UTC  F005 state variable filter  done
+Implementer: sonnet, 1 attempt. Checks: typecheck, 251 tests, build, smoke all pass.
+Notes: outputs match the cookbook biquad to about 2e-15, which confirms both filters. Seven deliberate breakages by the planner were each caught. One finding for later tasks: with the cutoff jumping between 200 Hz and 8 kHz on every sample, output stays finite but peaks reach about 5 times the input at q 8 (about 2.4 times at q 0.707). Swept filters inside feedback loops should keep q low (the specs use 0.8 and 1.2) and smooth their cutoff; the engine's limiter is the last line of defence.

@@ -116,7 +116,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/biquad.test.ts`
 
 ### F005 State variable filter
-- status: todo | type: agent | model: sonnet | deps: F000, F001 | gate: none
+- status: done | type: agent | model: sonnet | deps: F000, F001 | gate: none
 - files: `src/fx/dsp/svf.ts`, `tests/fx/svf.test.ts`
 - spec: trapezoidal (TPT) state variable filter, the standard Zavalishin / Cytomic formulation, safe when the cutoff changes every sample. `class Svf { constructor(sampleRate: number); set(freq: number, q: number): void; process(x: number): void; lp: number; bp: number; hp: number; reset(): void }` (`process` updates the three output fields).
 - tests: same pass and stop band checks as the biquad for lp, hp and bp; sweeping the cutoff from 200 Hz to 8 kHz once per sample over noise stays finite with peak under 4 times the input peak.
