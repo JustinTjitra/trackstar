@@ -165,7 +165,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/captureBuffer.test.ts`
 
 ### F012 Soft clip and limiter
-- status: todo | type: agent | model: sonnet | deps: F000, F001 | gate: none
+- status: done | type: agent | model: sonnet | deps: F000, F001 | gate: none
 - files: `src/fx/dsp/limiter.ts`, `tests/fx/limiter.test.ts`
 - spec: `softClip(x: number): number` (identity within 1e-6 for |x| <= 0.5, smooth knee above, monotonic, |output| <= 1). `class Limiter { constructor(sampleRate: number, ceiling = 0.98, releaseMs = 80); process(l: Float32Array, r: Float32Array, frames: number): void; get gain(): number` (current gain, 1 = no reduction) `; reset(): void }`. Stereo-linked peak limiter: gain drops instantly so no sample exceeds the ceiling, then recovers exponentially.
 - tests: a signal below the ceiling passes unchanged (exactly); a sine of amplitude 2 comes out with peak <= ceiling + 1e-6; gain is back above 0.99 within 5 release times after the loud part ends; both channels get the same gain; `softClip` properties.
