@@ -144,7 +144,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/crusher.test.ts`
 
 ### F009 Reverb
-- status: todo | type: agent | model: sonnet | deps: F000, F001, F003 | gate: none
+- status: done | type: agent | model: sonnet | deps: F000, F001, F003 | gate: none
 - files: `src/fx/dsp/reverb.ts`, `tests/fx/reverb.test.ts`
 - spec: the public-domain Freeverb structure (eight parallel damped feedback comb filters into four series allpass filters per channel, right channel offset by the stereo spread), with the standard 44.1 kHz delay lengths scaled by `sampleRate / 44100`. Implement from the structure description; write our own code. `class Reverb { constructor(sampleRate: number); setRoomSize(v: number): void; setDamping(v: number): void; process(inL: number, inR: number): void; outL: number; outR: number` (wet only) `; reset(): void }`.
 - tests: silence in gives exact silence out; an impulse leaves a tail (RMS from 50 to 150 ms above -60 dB); the tail at 3.0 s is at least 20 dB below the tail at 0.1 s for room size 0.5; a larger room rings longer; 5 s of noise at room 1, damping 0 stays finite; left and right outputs differ.
@@ -211,6 +211,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
   - Wet reverb level = 0.9 x amount; room size 0.5 to 0.95 with the amount. Dry at unity.
   - The dry + wet mix then passes a filter whose cutoff follows the amount geometrically: 'up' is a high-pass from 20 Hz to 1500 Hz, 'down' is a low-pass from 18 kHz to 500 Hz. Below amount 0.001 the filter is crossfaded out so the output equals the input exactly.
 - tests: identity at amount 0; 'up' at amount 1 cuts a 100 Hz sine by more than 20 dB; 'down' at amount 1 cuts an 8 kHz sine by more than 20 dB; an impulse at amount 0.7 leaves a tail (RMS from 200 to 400 ms above -50 dB); finite under noise.
+- planner note (from F009): the reverb's gain at 0 Hz is `0.72 / (1 - feedback)`, which is 4.5 at room size 0.5 and about 21 at 0.95, because all eight combs reinforce each other there. Music has little energy that low, but the brief for this task should high-pass the signal sent into the reverb (about 120 Hz, a `Biquad` or `Svf`) so bass and any offset cannot build up, and its tests should include a steady (0 Hz) input staying bounded.
 - accept: `npx vitest run tests/fx/reverbSweep.test.ts`
 
 ### F025 Isolator
