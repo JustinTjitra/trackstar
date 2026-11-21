@@ -284,9 +284,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/tapTempo.test.ts`
 
 ### F041 Onset detector
-- status: todo | type: agent | model: sonnet | deps: F000, F004 | gate: none
+- status: done | type: agent | model: sonnet | deps: F000, F004 | gate: none
 - files: `src/fx/tempo/onset.ts`, `tests/fx/onset.test.ts`
 - spec: `class OnsetDetector { constructor(sampleRate: number, hop = 512); process(mono: Float32Array, frames: number, onValue: (v: number) => void): void; get hopRate(): number` (values per second) `; reset(): void }`. Once per hop it reports an onset strength >= 0: the positive change in log energy, combining a band below 200 Hz and the full band. No allocation in `process`.
+  - As built: the power of each band is smoothed with an 8 ms one-pole filter before it is averaged over the hop, a power floor of 1e-4 (about -40 dB) is added before the logarithm, and the two bands are weighted equally. The first value after silence or `reset()` is an onset.
 - tests: a 120 BPM click track gives peaks every `hopRate x 0.5` values within one hop; silence gives zeros; a steady sine gives values near zero after the first hop; works when fed in blocks of 128.
 - accept: `npx vitest run tests/fx/onset.test.ts`
 
