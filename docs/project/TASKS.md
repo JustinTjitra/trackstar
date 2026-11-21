@@ -151,7 +151,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/reverb.test.ts`
 
 ### F010 Beat clock
-- status: todo | type: agent | model: haiku | deps: F001 | gate: none
+- status: done | type: agent | model: haiku | deps: F001 | gate: none
 - files: `src/fx/dsp/beatClock.ts`, `tests/fx/beatClock.test.ts`
 - spec: `class BeatClock { constructor(sampleRate: number); setBpm(bpm: number): void` (clamped 40..240) `; get bpm(): number; get samplesPerBeat(): number; advance(frames: number): void; get beats(): number` (fractional beats since reset) `; setBeats(b: number): void; phase(division: number): number` (0..1 inside the current division, division in beats) `; samplesToNext(division: number): number; reset(): void }`.
 - tests: at 120 BPM and 48 kHz `samplesPerBeat` is 24000; after advancing 12000, `phase(1)` is 0.5, `phase(0.5)` is 0 and `samplesToNext(1)` is 12000; BPM changes keep the beat position.
