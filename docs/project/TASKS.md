@@ -123,7 +123,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/svf.test.ts`
 
 ### F006 Three-band crossover
-- status: todo | type: agent | model: sonnet | deps: F004 | gate: none
+- status: done | type: agent | model: sonnet | deps: F004 | gate: none
 - files: `src/fx/dsp/crossover.ts`, `tests/fx/crossover.test.ts`
 - spec: fourth-order Linkwitz-Riley splits (two cascaded Butterworth biquads per slope) at `lowHz` and `highHz`, with the low band passed through an allpass matching the upper split so the three bands sum flat. `class ThreeBand { constructor(sampleRate: number, lowHz = 300, highHz = 3000); process(x: number): void; low: number; mid: number; high: number; reset(): void }`.
 - tests: `low + mid + high` has the input's level within 0.5 dB for sines at 50, 300, 1000, 3000 and 10000 Hz; at 100 Hz the low band is within 1 dB and the high band under -40 dB; at 10 kHz the reverse.

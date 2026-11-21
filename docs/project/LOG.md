@@ -28,3 +28,7 @@ Notes: no threshold in the brief needed changing. Six deliberate breakages by th
 ## 2026-11-21 02:50 UTC  F005 state variable filter  done
 Implementer: sonnet, 1 attempt. Checks: typecheck, 251 tests, build, smoke all pass.
 Notes: outputs match the cookbook biquad to about 2e-15, which confirms both filters. Seven deliberate breakages by the planner were each caught. One finding for later tasks: with the cutoff jumping between 200 Hz and 8 kHz on every sample, output stays finite but peaks reach about 5 times the input at q 8 (about 2.4 times at q 0.707). Swept filters inside feedback loops should keep q low (the specs use 0.8 and 1.2) and smooth their cutoff; the engine's limiter is the last line of defence.
+
+## 2026-11-21 03:46 UTC  F006 three-band crossover  done
+Implementer: sonnet, 1 attempt. Checks: typecheck, 292 tests, build, smoke all pass.
+Notes: the three bands sum to the reference all-pass chain within 3e-14, so the sum is level-flat by construction. No threshold needed changing. Five of six deliberate breakages by the planner were caught; the sixth (dropping the input sanitising) cannot change any output because each biquad sanitises its own input. One thing to know: with the default 300 Hz and 3 kHz split points, leaving out the low band's all-pass changes the summed level by less than 0.1 dB, so only the exact-identity test guards it. It would matter more if the two split points were moved close together.
