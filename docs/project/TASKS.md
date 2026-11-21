@@ -257,7 +257,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/scene.test.ts`
 
 ### F031 Effects engine
-- status: todo | type: agent | model: sonnet | deps: F012, F025, F026, F027, F030 | gate: none
+- status: done | type: agent | model: sonnet | deps: F012, F025, F026, F027, F030 | gate: none
 - files: `src/fx/engine.ts`, `tests/fx/engine.test.ts`
 - spec: `class FxEngine { constructor(sampleRate: number); setBpm(bpm: number): void; setBypass(on: boolean): void; setSceneSlot(slot: SceneSlot): void; setSceneAmount(v: number): void; setIsolator(low: number, mid: number, high: number): void; rollStart(division: RollDivision): void; rollStop(): void; release(type: ReleaseType, beats?: number): void; process(l: Float32Array, r: Float32Array, frames: number): void; state(): EngineState; reset(): void }` with `interface EngineState { bypass: boolean; slot: SceneSlot; amount: number; rollActive: boolean; releaseActive: boolean; limiterGain: number; bpm: number }`.
   - Chain: sanitize input, isolator, scene, roll, release, limiter.
@@ -265,6 +265,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
   - Construct `ReleaseFx` with 10 seconds of recording: a 2-beat backspin reaches back 2.94 times its length, which is 8.8 s at 40 BPM.
   - When a release finishes, the scene amount returns to 0, the roll stops and the isolator returns to unity.
   - `state()` returns one reused object.
+  - As built: bypass is a 10 ms crossfade to the untouched input, bit-exact from then on; when it completes the memory of every part is cleared, and roll and release triggers are ignored while it is on. The chain runs on a fixed grid of 128 samples that restarts on `reset()` and when bypass completes, so the output does not depend on the caller's block size; the cancel after a release lands at the end of the grid block in which its sound ended. `reset()` keeps all settings.
 - tests: bypass is bit-exact; neutral settings keep per-band levels within 0.5 dB of the input; after a release finishes `state().amount` is 0 and `rollActive` is false; fuzz test: 20 s of noise at 48 kHz in 128-frame blocks with seeded random calls to every setter between blocks, all output finite and within +-1; NaN and Infinity input give finite output; samples beyond `frames` are not modified.
 - accept: `npx vitest run tests/fx/engine.test.ts`
 
