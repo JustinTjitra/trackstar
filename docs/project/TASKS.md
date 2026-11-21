@@ -270,7 +270,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/engine.test.ts`
 
 ### F032 Message protocol
-- status: todo | type: agent | model: haiku | deps: F031 | gate: none
+- status: done | type: agent | model: haiku | deps: F031 | gate: none
 - files: `src/fx/protocol.ts`, `tests/fx/protocol.test.ts`
 - spec: `type FxMessage = { type: 'bpm'; bpm: number } | { type: 'autoBpm'; on: boolean } | { type: 'bypass'; on: boolean } | { type: 'sceneSlot'; slot: SceneSlot } | { type: 'sceneAmount'; value: number } | { type: 'isolator'; low: number; mid: number; high: number } | { type: 'rollStart'; division: RollDivision } | { type: 'rollStop' } | { type: 'release'; release: ReleaseType; beats?: number } | { type: 'reset' }`. `isFxMessage(x: unknown): x is FxMessage` checks shape and ranges (finite numbers, valid slot, division and release type). `applyMessage(engine: Pick<FxEngine, ...>, msg: FxMessage): boolean` calls the matching engine method and returns false for `autoBpm`, which the audio processor handles itself. `interface FxStateMessage extends EngineState { type: 'state'; detectedBpm: number | null; bpmConfidence: number }` and `interface FxErrorMessage { type: 'error'; message: string }`.
 - tests: every message type reaches the right method on a fake engine; malformed messages (wrong slot, NaN, missing fields, unknown type) are rejected.
