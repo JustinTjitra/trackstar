@@ -197,7 +197,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/noiseSweep.test.ts`
 
 ### F023 Spiral
-- status: todo | type: agent | model: sonnet | deps: F002, F003, F010 | gate: none
+- status: done | type: agent | model: sonnet | deps: F002, F003, F010 | gate: none
 - files: `src/fx/effects/spiral.ts`, `tests/fx/spiral.test.ts`
 - spec: a feedback delay whose repeats rise or fall in pitch. `class Spiral implements StereoEffect, TempoAware { constructor(sampleRate: number, direction: SceneDirection); setBpm(bpm): void; setAmount(v: number): void; process(...); reset() }`.
   - Feedback loop with base delay 0.5 beat. Inside the loop, a two-tap crossfading delay-line pitch shifter (60 ms window, triangular crossfade between taps) shifts each pass by `2^(+-4 x amount / 12)`: up to 4 semitones per repeat, upward for 'up', downward for 'down'.
