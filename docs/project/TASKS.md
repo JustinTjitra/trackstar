@@ -137,7 +137,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/noise.test.ts`
 
 ### F008 Bit crusher
-- status: todo | type: agent | model: haiku | deps: F000, F001 | gate: none
+- status: done | type: agent | model: haiku | deps: F000, F001 | gate: none
 - files: `src/fx/dsp/crusher.ts`, `tests/fx/crusher.test.ts`
 - spec: `class Crusher { setBits(bits: number): void` (1..16, fractional allowed) `; setDownsample(factor: number): void` (>= 1, sample-and-hold every `factor` samples, fractional allowed) `; process(x: number): number; reset(): void }`.
 - tests: 16 bits and factor 1 changes a sine by less than 1e-4; 4 bits gives at most 17 distinct output values on a ramp; factor 4 holds each value for 4 samples.

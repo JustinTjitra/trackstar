@@ -36,3 +36,7 @@ Notes: the three bands sum to the reference all-pass chain within 3e-14, so the 
 ## 2026-11-21 04:50 UTC  F007 noise source  done
 Implementer: haiku, 1 attempt. Checks: typecheck, 307 tests, build, smoke all pass.
 Notes: the planner's review found a real test gap and fixed it. Removing the slowest of the three pink filter stages passed every test, because the flatness test only measured 250 Hz and up and that stage shapes the bass. Measured over 62.5 Hz to 8 kHz, the correct filter stays within about 1.2 dB across four seeds and the broken one spreads 4.5 dB, so the test now starts at 62.5 Hz; removing any one stage fails it. Measured pink level: RMS 0.255, peak 1.09 over 10 s, so "roughly -1..1" means occasional samples just above 1. The white octave steps read 2.6 to 2.9 dB, not 3.0, because the digital band-pass used for measuring narrows toward high frequencies; the same effect makes the 8 kHz pink band read about 0.9 dB low.
+
+## 2026-11-21 05:45 UTC  F008 bit crusher  done
+Implementer: haiku, 1 attempt. Checks: typecheck, 324 tests, build, smoke all pass.
+Notes: no expectation in the brief needed changing. Seven deliberate breakages by the planner (negative zero, clipping, NaN setting accepted, incomplete reset, counter reset instead of subtract, missing upper bit clamp, unsanitised input) were each caught, on top of the implementer's own three. The crusher does not clip values beyond -1..1; the engine's limiter handles level.
