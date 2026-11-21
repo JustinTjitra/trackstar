@@ -519,3 +519,247 @@ describe('FilterEcho constructor', () => {
     }
   });
 });
+
+describe('FilterEcho with crush', () => {
+  const TONE = 14400; // 0.3 s burst, shorter than the 18000 sample echo spacing
+  const STEP_5 = 2 / 2 ** 5; // step at amount 1 (5 bits)
+  const STEP_85 = 2 / 2 ** 8.5; // step at amount 0.5 (8.5 bits)
+
+  /** Feeds `input` on the left followed by silence into 60000 samples; returns the left output. */
+  function echoOne(echo: FilterEcho, input: Float32Array): Float32Array {
+    const l = silence(60000);
+    l.set(input);
+    run(echo, l, silence(60000));
+    return l;
+  }
+
+  /** A fresh echo at `amount` (settled), fed with `input`; returns the left output. */
+  function render(amount: number, input: Float32Array, opts: { filter: EchoFilter; crush?: boolean } = { filter: 'none', crush: true }): Float32Array {
+    const echo = new FilterEcho(SR, opts);
+    echo.setAmount(amount);
+    settle(echo, 0.5);
+    return echoOne(echo, input);
+  }
+
+  /** Echo 1 of the output (the dry input is silent there). */
+  const echo1 = (x: Float32Array): Float32Array => x.subarray(18000, 32400);
+
+  /** Number of samples of `x` that are not within `tol` of a whole multiple of `unit`. */
+  function offGrid(x: Float32Array, unit: number, tol: number): number {
+    let n = 0;
+    for (let i = 0; i < x.length; i++) {
+      const q = x[i] / unit;
+      if (Math.abs(q - Math.round(q)) > tol) n++;
+    }
+    return n;
+  }
+
+  /** Lengths of the runs of equal consecutive values, leaving out the first and last (cut by the window). */
+  function runLengths(x: Float32Array): number[] {
+    const out: number[] = [];
+    let start = 0;
+    for (let i = 1; i <= x.length; i++) {
+      if (i === x.length || x[i] !== x[start]) {
+        out.push(i - start);
+        start = i;
+      }
+    }
+    return out.slice(1, -1);
+  }
+
+  const noiseIn = (seed: number): Float32Array => noise(TONE, seed, 0.9);
+
+  /** rms(crush - clean) / rms(clean) over echo 1 of a 1 kHz tone. */
+  function distortion(amount: number, withCrush: boolean): number {
+    const input = sine(1000, TONE / SR, SR, 0.5);
+    const clean = echo1(render(amount, input, { filter: 'none' }));
+    const crushed = echo1(render(amount, input, { filter: 'none', crush: withCrush }));
+    const diff = new Float32Array(clean.length);
+    for (let i = 0; i < diff.length; i++) diff[i] = crushed[i] - clean[i];
+    return rms(diff) / rms(clean);
+  }
+
+  /** 1 s of noise on both channels, then 9 s of silence; returns the last second. */
+  function tail(echo: FilterEcho): { l: Float32Array; r: Float32Array } {
+    echo.setAmount(1);
+    const l = silence(10 * SR);
+    const r = silence(10 * SR);
+    l.set(noise(SR, 21, 0.9));
+    r.set(noise(SR, 22, 0.9));
+    run(echo, l, r);
+    return { l: l.subarray(9 * SR), r: r.subarray(9 * SR) };
+  }
+
+  it('leaves noise on both channels bit-identical at amount 0', () => {
+    const echo = new FilterEcho(SR, { filter: 'none', crush: true });
+    const inL = noise(5000, 1);
+    const inR = noise(5000, 2);
+    const l = inL.slice();
+    const r = inR.slice();
+    run(echo, l, r);
+    expectEqual(l, inL);
+    expectEqual(r, inR);
+  });
+
+  it('puts the echo values on the step grid at amount 1', () => {
+    const e = echo1(render(1, noiseIn(5)));
+    expect(offGrid(e, STEP_5, 1e-3)).toBe(0);
+    expect(new Set(e).size).toBeGreaterThanOrEqual(10);
+  });
+
+  it('holds each value for 6 samples at amount 1', () => {
+    const runs = runLengths(echo1(render(1, noiseIn(5))));
+    expect(runs.length).toBeGreaterThan(2000);
+    const six = runs.filter((n) => n === 6).length;
+    expect(six / runs.length).toBeGreaterThanOrEqual(0.95);
+    // The few longer runs are two or three neighbouring holds that landed on the same value,
+    // so every run is a whole number of 6-sample holds. This part is exact.
+    expect(runs.filter((n) => n % 6 !== 0)).toEqual([]);
+  });
+
+  it('holds for 3 and 4 samples alternately on a finer grid at amount 0.5', () => {
+    const e = echo1(render(0.5, noiseIn(5)));
+    const runs = runLengths(e);
+    const ok = runs.filter((n) => n === 3 || n === 4).length;
+    expect(ok / runs.length).toBeGreaterThanOrEqual(0.95);
+    const mean = runs.reduce((s, n) => s + n, 0) / runs.length;
+    expect(Math.abs(mean / 3.5 - 1)).toBeLessThan(0.05);
+    // the output is half of the crushed value
+    expect(offGrid(e.map((v) => v / 0.5), STEP_85, 1e-2)).toBe(0);
+  });
+
+  it('is almost clean at a low amount', () => {
+    expect(distortion(0.05, true)).toBeLessThan(0.5);
+  });
+
+  it('adds more grit as the amount goes up', () => {
+    const d3 = distortion(0.3, true);
+    const d6 = distortion(0.6, true);
+    const d10 = distortion(1, true);
+    expect(d3).toBeLessThan(d6);
+    expect(d6).toBeLessThan(d10);
+    expect(d10).toBeGreaterThan(0.1);
+    // sanity check of the measure: an echo without crush has no distance from itself
+    expect(distortion(0.6, false)).toBe(0);
+  });
+
+  it('lets the tail die out to exact silence, which needs rounding toward zero', () => {
+    const crushed = tail(new FilterEcho(SR, { filter: 'none', crush: true }));
+    expect(nonZero(crushed.l)).toEqual([]);
+    expect(nonZero(crushed.r)).toEqual([]);
+    // a clean echo at feedback 0.85 decays slowly and is never cut off
+    const clean = tail(new FilterEcho(SR, { filter: 'none' }));
+    expect(nonZero(clean.l).length).toBeGreaterThan(0);
+    expect(nonZero(clean.r).length).toBeGreaterThan(0);
+  });
+
+  it('crushes inside the loop, not only at the output', () => {
+    // A held DC burst of 0.3 at amount 1: echo 1 is 0.25 (4 steps of 0.0625). Written back crushed,
+    // the loop carries 0.85 * 0.25 = 0.2125, so echo 2 is 3 steps = 0.1875. With the crusher after
+    // the write-back the loop would carry 0.255 and echo 2 would be 4 steps = 0.25.
+    const input = new Float32Array(TONE).fill(0.3);
+    const out = render(1, input);
+    expect(new Set(out.subarray(18100, 32300))).toEqual(new Set([0.25]));
+    expect(new Set(out.subarray(36100, 50300))).toEqual(new Set([0.1875]));
+  });
+
+  it('stays inside the level bound of the plain echo', () => {
+    const echo = new FilterEcho(SR, { filter: 'none', crush: true });
+    echo.setAmount(1);
+    const l = noise(10 * SR, 3);
+    const r = noise(10 * SR, 4);
+    run(echo, l, r);
+    expect(allFinite(l)).toBe(true);
+    expect(allFinite(r)).toBe(true);
+    const bound = 1 + 1 / (1 - 0.85) + 1e-3;
+    expect(peak(l)).toBeLessThanOrEqual(bound);
+    expect(peak(r)).toBeLessThanOrEqual(bound);
+  });
+
+  it('keeps the channels independent', () => {
+    const echo = new FilterEcho(SR, { filter: 'none', crush: true });
+    echo.setAmount(0.8);
+    const l = noise(2 * SR, 1);
+    const r = silence(2 * SR);
+    run(echo, l, r);
+    expect(nonZero(r)).toEqual([]);
+    expect(nonZero(l).length).toBeGreaterThan(0);
+  });
+
+  it('clears the crushers on reset', () => {
+    const echo = new FilterEcho(SR, { filter: 'none', crush: true });
+    echo.setAmount(0.8);
+    // 2 samples more than a second: at amount 0.8 the hold is 5 samples and 48000 is a multiple of 5,
+    // so a whole second would end right on a hold boundary and leave nothing for reset to clear
+    run(echo, noise(SR + 2, 11), noise(SR + 2, 12));
+    echo.reset();
+    const l = silence(SR);
+    const r = silence(SR);
+    run(echo, l, r);
+    expect(nonZero(l)).toEqual([]);
+    expect(nonZero(r)).toEqual([]);
+  });
+
+  it('gives the same output whatever the block size', () => {
+    const make = () => {
+      const echo = new FilterEcho(SR, { filter: 'none', crush: true });
+      echo.setAmount(0.8);
+      return echo;
+    };
+    const a = make();
+    const la = noise(SR, 1);
+    const ra = noise(SR, 2);
+    runBlocks((l, r, f) => a.process(l, r, f), la, ra, 128);
+    const b = make();
+    const lb = noise(SR, 1);
+    const rb = noise(SR, 2);
+    run(b, lb, rb);
+    expectEqual(la, lb);
+    expectEqual(ra, rb);
+  });
+
+  it('works together with a filter', () => {
+    const echo = new FilterEcho(SR, { filter: 'lpf', crush: true });
+    echo.setAmount(1);
+    const l = noise(5 * SR, 3);
+    const r = noise(5 * SR, 4);
+    run(echo, l, r);
+    expect(allFinite(l)).toBe(true);
+    expect(allFinite(r)).toBe(true);
+    const t = tail(new FilterEcho(SR, { filter: 'lpf', crush: true }));
+    expect(nonZero(t.l)).toEqual([]);
+    expect(nonZero(t.r)).toEqual([]);
+  });
+
+  // Order inside the loop: filter first, crusher last. So what comes out is still on the
+  // crusher's step grid and still held in 6-sample steps. If the filter came last it would
+  // smooth both away.
+  it('crushes after the filter, so the filtered echo is still on the step grid', () => {
+    const out = echo1(render(1, noiseIn(5), { filter: 'lpf', crush: true }));
+    expect(offGrid(out, STEP_5, 1e-3)).toBe(0);
+    expect(new Set(out).size).toBeGreaterThanOrEqual(3);
+    expect(runLengths(out).filter((n) => n % 6 !== 0)).toEqual([]);
+  });
+
+  it('treats crush false and an absent crush option alike', () => {
+    const a = new FilterEcho(SR, { filter: 'none', crush: false });
+    const b = new FilterEcho(SR, { filter: 'none' });
+    a.setAmount(0.7);
+    b.setAmount(0.7);
+    const la = noise(SR, 1);
+    const ra = noise(SR, 2);
+    const lb = la.slice();
+    const rb = ra.slice();
+    run(a, la, ra);
+    run(b, lb, rb);
+    expectEqual(la, lb);
+    expectEqual(ra, rb);
+  });
+
+  it('makes the grid depend on the amount', () => {
+    const fine = echo1(render(0.3, noiseIn(5))).map((v) => v / 0.3);
+    expect(offGrid(fine, STEP_5, 1e-3)).toBeGreaterThan(fine.length / 2);
+    const coarse = echo1(render(1, noiseIn(5)));
+    expect(offGrid(coarse, STEP_5, 1e-3)).toBe(0);
+  });
+});

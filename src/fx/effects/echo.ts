@@ -1,6 +1,7 @@
-// tempo-synced feedback delay with a state variable filter in the loop
+// tempo-synced feedback delay with an optional state variable filter and an optional bit crusher in the loop
 
-import { beatsToSamples, clamp, clamp01, expLerp, sanitize } from '../dsp/math';
+import { Crusher } from '../dsp/crusher';
+import { beatsToSamples, clamp, clamp01, expLerp, lerp, sanitize } from '../dsp/math';
 import { DelayLine } from '../dsp/delayLine';
 import { Smoother } from '../dsp/smoother';
 import { Svf } from '../dsp/svf';
@@ -31,13 +32,22 @@ const LPF_FROM = 8000; // cutoff in Hz
 const LPF_TO = 600;
 const SVF_Q = 0.7071;
 
+/** Crusher ranges as the amount goes 0 to 1, interpolated linearly. */
+const CRUSH_BITS_FROM = 12; // bit depth
+const CRUSH_BITS_TO = 5;
+const CRUSH_HOLD_FROM = 1; // sample-and-hold length in samples
+const CRUSH_HOLD_TO = 6;
+
 /** Filter type codes, so the per-sample code compares numbers and not strings. */
 const F_NONE = 0;
 const F_BPF = 1;
 const F_HPF = 2;
 const F_LPF = 3;
 
-/** Tempo-synced stereo feedback echo with an optional filter in the feedback loop. */
+/**
+ * Tempo-synced stereo feedback echo with an optional filter and an optional bit crusher in the
+ * feedback loop. With the crusher on, every repeat comes back grittier than the one before.
+ */
 export class FilterEcho implements StereoEffect, TempoAware {
   #sampleRate: number;
   #type: number;
@@ -50,13 +60,16 @@ export class FilterEcho implements StereoEffect, TempoAware {
   #lineR: DelayLine;
   #svfL: Svf;
   #svfR: Svf;
+  #crush: boolean;
+  #crushL: Crusher;
+  #crushR: Crusher;
   #amount: Smoother;
   #delay: Smoother;
-  /** The amount the filter coefficients were last computed for. */
+  /** The amount the filter and crusher settings were last computed for. */
   #filterAmount = 0;
 
   /** Throws RangeError unless sampleRate is finite and > 0. Starts at 120 BPM, 0.75 beats, amount 0. */
-  constructor(sampleRate: number, opts: { filter: EchoFilter }) {
+  constructor(sampleRate: number, opts: { filter: EchoFilter; crush?: boolean }) {
     if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
       throw new RangeError('FilterEcho: sampleRate must be finite and > 0');
     }
@@ -91,9 +104,17 @@ export class FilterEcho implements StereoEffect, TempoAware {
     this.#lineR = new DelayLine(maxDelay);
     this.#svfL = new Svf(sampleRate);
     this.#svfR = new Svf(sampleRate);
+    // The crushers are always created; the pair is idle unless `crush` is on. They round toward
+    // zero: rounding to nearest inside a feedback loop would keep a quiet echo alive for ever.
+    this.#crush = opts.crush === true;
+    this.#crushL = new Crusher();
+    this.#crushR = new Crusher();
+    this.#crushL.setTruncate(true);
+    this.#crushR.setTruncate(true);
     this.#amount = new Smoother(sampleRate, AMOUNT_SMOOTH_MS, 0);
     this.#delay = new Smoother(sampleRate, DELAY_SMOOTH_MS, beatsToSamples(this.#beats, this.#bpm, sampleRate));
     if (this.#type !== F_NONE) this.#setFilter(0);
+    if (this.#crush) this.#setCrush(0);
   }
 
   /** Tempo, clamped to 40..240 BPM. Non-finite values are ignored. */
@@ -125,16 +146,20 @@ export class FilterEcho implements StereoEffect, TempoAware {
     const lineR = this.#lineR;
     const svfL = this.#svfL;
     const svfR = this.#svfR;
+    const crushL = this.#crushL;
+    const crushR = this.#crushR;
     const type = this.#type;
+    const crush = this.#crush;
     let lastA = this.#filterAmount;
     for (let i = 0; i < n; i++) {
       const a = amountSmoother.next();
       const fb = MAX_FEEDBACK * a;
       const d = delaySmoother.next();
 
-      // the cutoff only moves while the amount moves; tan() is too costly to repeat for nothing
-      if (type !== F_NONE && a !== lastA) {
-        this.#setFilter(a);
+      // the settings only move while the amount moves; tan() is too costly to repeat for nothing
+      if (a !== lastA) {
+        if (type !== F_NONE) this.#setFilter(a);
+        if (crush) this.#setCrush(a);
         lastA = a;
       }
 
@@ -144,6 +169,7 @@ export class FilterEcho implements StereoEffect, TempoAware {
         svfL.process(el);
         el = type === F_BPF ? svfL.bp : type === F_HPF ? svfL.hp : svfL.lp;
       }
+      if (crush) el = crushL.process(el);
       lineL.write(xl + fb * el);
       l[i] = xl + a * el;
 
@@ -153,6 +179,7 @@ export class FilterEcho implements StereoEffect, TempoAware {
         svfR.process(er);
         er = type === F_BPF ? svfR.bp : type === F_HPF ? svfR.hp : svfR.lp;
       }
+      if (crush) er = crushR.process(er);
       lineR.write(xr + fb * er);
       r[i] = xr + a * er;
     }
@@ -165,8 +192,21 @@ export class FilterEcho implements StereoEffect, TempoAware {
     this.#lineR.clear();
     this.#svfL.reset();
     this.#svfR.reset();
+    this.#crushL.reset();
+    this.#crushR.reset();
     this.#amount.jump(this.#amount.target);
     this.#delay.jump(this.#delay.target);
+  }
+
+  /** Sets both crushers for the given amount. */
+  #setCrush(amount: number): void {
+    const bits = lerp(CRUSH_BITS_FROM, CRUSH_BITS_TO, amount);
+    const hold = lerp(CRUSH_HOLD_FROM, CRUSH_HOLD_TO, amount);
+    this.#crushL.setBits(bits);
+    this.#crushR.setBits(bits);
+    this.#crushL.setDownsample(hold);
+    this.#crushR.setDownsample(hold);
+    this.#filterAmount = amount;
   }
 
   /** Sets both filters for the given amount. */
