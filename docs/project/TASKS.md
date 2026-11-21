@@ -246,12 +246,13 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/release.test.ts`
 
 ### F030 Scene manager
-- status: todo | type: agent | model: sonnet | deps: F021, F022, F023, F024 | gate: none
+- status: done | type: agent | model: sonnet | deps: F021, F022, F023, F024 | gate: none
 - files: `src/fx/scene.ts`, `tests/fx/scene.test.ts`
 - spec: `const SCENE_TABLE: Record<SceneSlot, { up: string; down: string }>` = slot 0 `BPF ECHO` / `HPF ECHO`, 1 `ECHO` / `LPF ECHO`, 2 `NOISE` / `CRUSH ECHO`, 3 `SPIRAL UP` / `SPIRAL DOWN`, 4 `REVERB UP` / `REVERB DOWN`. `class SceneFx implements StereoEffect, TempoAware { constructor(sampleRate: number); setBpm(bpm): void; setSlot(slot: SceneSlot): void; setAmount(v: number): void` (-1..1: positive drives the slot's build-up effect, negative its break-down effect) `; get slot(): SceneSlot; get amount(): number; process(...); reset() }`.
   - All ten effects are constructed up front; only the active one is processed.
   - On a slot change or a sign flip the outgoing effect is reset, and a 10 ms crossfade from the dry signal hides the switch.
   - At amount 0 the output equals the input exactly.
+  - As built: the outgoing effect is not cut. It keeps running and fades out of the output over 10 ms, then it is reset; the incoming effect has its input faded in over the same 10 ms, so its empty memory never sees a jump. Up to two effects are processed during a switch. If a third is asked for within those 10 ms the quieter of the two is cut. An effect that is fading out and is asked for again carries on from where it is. `reset()` keeps slot and amount and puts the wanted effect at full strength at once. The click test passes with a limit of the input's largest step plus 0.03 (measured 0.0115 against 0.0063 for the tone).
 - tests: identity at 0; each of the ten slot and sign combinations at 0.7 changes a noise signal (difference above -40 dB) and stays finite; switching slots mid-stream on a sine adds no step larger than the input's largest step plus 0.2; table contents.
 - accept: `npx vitest run tests/fx/scene.test.ts`
 
