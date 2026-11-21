@@ -246,3 +246,71 @@ describe('Crusher', () => {
     expect(maxError(out, input)).toBeLessThanOrEqual(1 / 64 + 1e-12);
   });
 });
+
+describe('Crusher rounding toward zero', () => {
+  it('rounds to the nearest step by default and toward zero when asked', () => {
+    const nearest = new Crusher();
+    nearest.setBits(4); // step 0.125
+    const toward = new Crusher();
+    toward.setBits(4);
+    toward.setTruncate(true);
+    expect(nearest.process(0.12)).toBe(0.125);
+    expect(toward.process(0.12)).toBe(0);
+    nearest.reset();
+    toward.reset();
+    expect(nearest.process(-0.24)).toBe(-0.25);
+    expect(toward.process(-0.24)).toBe(-0.125);
+  });
+
+  it('never increases the magnitude and stays on the step grid', () => {
+    const c = new Crusher();
+    c.setBits(5);
+    c.setTruncate(true);
+    for (let i = -3000; i <= 3000; i++) {
+      const x = i / 1000;
+      const y = c.process(x);
+      expect(Math.abs(y)).toBeLessThanOrEqual(Math.abs(x));
+      expect(Math.abs(x) - Math.abs(y)).toBeLessThan(0.0625);
+      expect(Math.abs(y / 0.0625 - Math.round(y / 0.0625))).toBeLessThan(1e-12);
+    }
+  });
+
+  it('gives a normal zero, not a negative zero, for small negative input', () => {
+    const c = new Crusher();
+    c.setBits(4);
+    c.setTruncate(true);
+    expect(Object.is(c.process(-0.05), 0)).toBe(true);
+  });
+
+  it('can be switched back to nearest', () => {
+    const c = new Crusher();
+    c.setBits(4);
+    c.setTruncate(true);
+    c.setTruncate(false);
+    expect(c.process(0.12)).toBe(0.125);
+  });
+
+  // Why the mode exists. In a loop with feedback 0.85 at 5 bits, a value of 1, 2 or 3 steps
+  // rounds back to itself on every pass (0.85 -> 1, 1.7 -> 2, 2.55 -> 3), so the echo never
+  // dies. Toward zero, every pass loses at least a little, and the echo reaches exact silence.
+  it('lets an echo in a feedback loop die out, where rounding to nearest keeps it alive for ever', () => {
+    const tailPeak = (truncate: boolean): number => {
+      const delay = 1000;
+      const line = new Float64Array(delay);
+      const c = new Crusher();
+      c.setBits(5);
+      c.setTruncate(truncate);
+      let peakAtEnd = 0;
+      for (let n = 0; n < delay * 400; n++) {
+        const x = n < 200 ? Math.sin(n * 0.3) * 0.9 : 0;
+        const slot = n % delay;
+        const e = c.process(line[slot]);
+        line[slot] = x + 0.85 * e;
+        if (n >= delay * 399) peakAtEnd = Math.max(peakAtEnd, Math.abs(e));
+      }
+      return peakAtEnd;
+    };
+    expect(tailPeak(false)).toBeCloseTo(0.1875, 12); // stuck at three steps after 400 repeats
+    expect(tailPeak(true)).toBe(0);
+  });
+});

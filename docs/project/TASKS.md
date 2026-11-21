@@ -186,6 +186,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - files: `src/fx/effects/echo.ts`, `tests/fx/echo.test.ts`
 - spec: add `crush?: boolean` to the `FilterEcho` options. When true, a `Crusher` sits in the feedback path: bits 12 down to 5 and downsample factor 1 up to 6 as the amount goes 0 to 1. Behaviour without `crush` must not change.
 - tests: existing tests still pass; with `crush`, echoes of a sine contain harmonics a clean echo does not (energy at a non-harmonic probe frequency rises); identity at amount 0 still holds.
+- planner note: the crusher in the loop must run with `setTruncate(true)` (see LOG, F008 follow-up), otherwise the tail never dies at high amounts. The tests must include the tail reaching exact silence at amount 1.
 - accept: `npx vitest run tests/fx/echo.test.ts`
 
 ### F022 Noise sweep
