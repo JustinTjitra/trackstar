@@ -109,7 +109,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/delayLine.test.ts`
 
 ### F004 Biquad filter
-- status: todo | type: agent | model: sonnet | deps: F000, F001 | gate: none
+- status: done | type: agent | model: sonnet | deps: F000, F001 | gate: none
 - files: `src/fx/dsp/biquad.ts`, `tests/fx/biquad.test.ts`
 - spec: Audio EQ Cookbook (Robert Bristow-Johnson) coefficients, transposed direct form II. `class Biquad { setLowpass(freq, q, sampleRate): void; setHighpass(freq, q, sampleRate): void; setBandpass(freq, q, sampleRate): void` (0 dB peak gain) `; setAllpass(freq, q, sampleRate): void; process(x: number): number; reset(): void }`. Frequencies are clamped to `[10, 0.45 * sampleRate]`.
 - tests: lowpass at 1 kHz (q 0.707) passes 100 Hz within 0.5 dB and cuts 8 kHz by more than 30 dB; highpass mirrored; bandpass passes its centre within 0.5 dB and cuts two octaves away by more than 10 dB at q 2; allpass keeps level within 0.1 dB; output finite at the frequency clamps.

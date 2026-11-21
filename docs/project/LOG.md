@@ -20,3 +20,7 @@ Notes: four deliberate breakages (time constant in seconds, jump not updating th
 ## 2026-11-21 00:46 UTC  F003 fractional delay line  done
 Implementer: sonnet, 1 attempt. Checks: typecheck, 195 tests, build, smoke all pass.
 Notes: the planner's brief contained an error, which the implementer caught and reported: reading at delay D before writing gives a delay of D + 1, not D, because `read(0)` is the newest written sample. The task spec's semantics were kept. For later tasks (echo, reverb, capture buffer): use `write(x)` then `read(d)` for a delay of d, or `read(d - 1)` then `write(x)`. Five of six deliberate breakages were caught; the sixth (buffer one slot smaller) cannot change any output, since the extra slot is only read with an interpolation weight of zero.
+
+## 2026-11-21 01:45 UTC  F004 biquad filter  done
+Implementer: sonnet, 1 attempt. Checks: typecheck, 221 tests, build, smoke all pass.
+Notes: no threshold in the brief needed changing. Six deliberate breakages by the planner (sign of a1, low-pass and high-pass swapped, band-pass peak gain, missing frequency clamp, partial reset, all-pass coefficients swapped) were each caught. The impulse response is checked against an independent direct-form reference to 1e-12.
