@@ -172,7 +172,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/limiter.test.ts`
 
 ### F020 Filter echo
-- status: todo | type: agent | model: sonnet | deps: F002, F003, F005, F010 | gate: none
+- status: done | type: agent | model: sonnet | deps: F002, F003, F005, F010 | gate: none
 - files: `src/fx/effects/echo.ts`, `tests/fx/echo.test.ts`
 - spec: tempo-synced stereo feedback delay with a filter in the feedback path. Covers Echo, BPF Echo, HPF Echo and LPF Echo. `type EchoFilter = 'none' | 'bpf' | 'hpf' | 'lpf'`. `class FilterEcho implements StereoEffect, TempoAware { constructor(sampleRate: number, opts: { filter: EchoFilter }); setBpm(bpm: number): void; setAmount(v: number): void; setBeats(beats: number): void` (0.25, 0.5, 0.75 or 1; default 0.75) `; process(...); reset() }`.
   - Dry signal always passes at unity. Wet level = amount. Feedback = 0.85 x amount. Both smoothed (20 ms). Delay time changes are smoothed (50 ms).
