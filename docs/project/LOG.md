@@ -16,3 +16,7 @@ Notes: three deliberate breakages (expLerp made linear, sanitize letting Infinit
 ## 2026-11-20 23:44 UTC  F002 parameter smoother  done
 Implementer: haiku, 1 attempt. Checks: typecheck, 180 tests, build, smoke all pass.
 Notes: four deliberate breakages (time constant in seconds, jump not updating the target, no snap, NaN accepted as a target) were each caught. The class uses `#private` fields because plain private fields would clash with its `value` and `target` getters.
+
+## 2026-11-21 00:46 UTC  F003 fractional delay line  done
+Implementer: sonnet, 1 attempt. Checks: typecheck, 195 tests, build, smoke all pass.
+Notes: the planner's brief contained an error, which the implementer caught and reported: reading at delay D before writing gives a delay of D + 1, not D, because `read(0)` is the newest written sample. The task spec's semantics were kept. For later tasks (echo, reverb, capture buffer): use `write(x)` then `read(d)` for a delay of d, or `read(d - 1)` then `write(x)`. Five of six deliberate breakages were caught; the sixth (buffer one slot smaller) cannot change any output, since the extra slot is only read with an interpolation weight of zero.

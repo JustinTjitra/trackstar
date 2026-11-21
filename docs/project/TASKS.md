@@ -102,7 +102,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/smoother.test.ts`
 
 ### F003 Fractional delay line
-- status: todo | type: agent | model: sonnet | deps: F000, F001 | gate: none
+- status: done | type: agent | model: sonnet | deps: F000, F001 | gate: none
 - files: `src/fx/dsp/delayLine.ts`, `tests/fx/delayLine.test.ts`
 - spec: `class DelayLine { constructor(maxDelaySamples: number); write(x: number): void; read(delaySamples: number): number; clear(): void; get maxDelay(): number }`. `read(0)` returns the most recently written sample, `read(n)` the sample written n writes earlier. Fractional delays use linear interpolation. Delays are clamped to `[0, maxDelay]`.
 - tests: an impulse comes back after exactly N samples; `read(10.5)` is the mean of the neighbours; reads before anything is written are 0; wraps correctly past the buffer length; `clear`.
