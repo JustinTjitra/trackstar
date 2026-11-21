@@ -277,7 +277,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/protocol.test.ts`
 
 ### F040 Tap tempo
-- status: todo | type: agent | model: haiku | deps: none | gate: none
+- status: done | type: agent | model: haiku | deps: none | gate: none
 - files: `src/fx/tempo/tapTempo.ts`, `tests/fx/tapTempo.test.ts`
 - spec: `class TapTempo { constructor(opts?: { maxGapMs?: number; window?: number }); tap(tMs: number): number | null; reset(): void }`. Returns the BPM from the median interval of the last `window` (default 8) taps once there are at least two. A gap longer than `maxGapMs` (default 2000) starts over and returns null. Results outside 40..240 return null.
 - tests: steady taps at 500 ms give 120; one late tap barely moves the result; a long gap resets; out-of-range intervals return null.
