@@ -292,9 +292,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/onset.test.ts`
 
 ### F042 BPM detector
-- status: todo | type: agent | model: sonnet | deps: F041 | gate: none
+- status: done | type: agent | model: sonnet | deps: F041 | gate: none
 - files: `src/fx/tempo/bpmDetector.ts`, `tests/fx/bpmDetector.test.ts`
 - spec: `class BpmDetector { constructor(hopRate: number, opts?: { windowSeconds?: number; minBpm?: number; maxBpm?: number }); push(onsetValue: number): void; estimate(): { bpm: number; confidence: number } | null; reset(): void }`. Defaults: 8 s window, 70 to 180 BPM. Autocorrelation of the onset envelope over the window, peak lag refined by parabolic interpolation, tempo folded into range by doubling or halving, confidence = peak over zero-lag (0..1). Returns null until 4 s of data. Work arrays are preallocated.
+  - As built: the onset values are lightly smoothed (0.25, 0.5, 0.25) and the mean removed before the autocorrelation; periods up to two beats of the slowest tempo are searched; the shortest period within 0.8 of the strongest is chosen; it is refined by a centroid around the peak and then by its multiples up to 4 (not by parabolic interpolation, which was off by up to 0.9 BPM); confidence is the peak over zero lag. `estimate()` returns one reused object, and null for silence, a constant, or a single hit. A tempo exactly on the edge of the range (180 with the defaults) can read as its half.
 - tests: click tracks at 90, 120, 128, 140 and 174 BPM read within 1 BPM after 8 s; 60 BPM clicks read as 120; noise alone has confidence under 0.3; 128 BPM clicks with noise 12 dB below still read within 1.5 BPM.
 - accept: `npx vitest run tests/fx/bpmDetector.test.ts`
 
