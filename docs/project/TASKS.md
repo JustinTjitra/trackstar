@@ -216,7 +216,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/reverbSweep.test.ts`
 
 ### F025 Isolator
-- status: todo | type: agent | model: sonnet | deps: F002, F006 | gate: none
+- status: done | type: agent | model: sonnet | deps: F002, F006 | gate: none
 - files: `src/fx/effects/isolator.ts`, `tests/fx/isolator.test.ts`
 - spec: `class Isolator implements StereoEffect { constructor(sampleRate: number); setLow(v: number): void; setMid(v: number): void; setHigh(v: number): void; process(...); reset() }`. Each band control is 0..1: 0 kills the band, 0.5 is unity, 1 is +6 dB. Gain curve: below 0.5, `(v / 0.5)^2`; above, linear from 1 to `dbToGain(6)`. Gains smoothed over 20 ms.
 - tests: all at 0.5 keeps sines at 60 Hz, 1 kHz and 10 kHz within 0.5 dB; low at 0 cuts 60 Hz by more than 40 dB while 5 kHz stays within 1 dB; high at 1 lifts 10 kHz by 6 dB within 1 dB.
