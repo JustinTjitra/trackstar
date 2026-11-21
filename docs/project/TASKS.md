@@ -130,7 +130,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/crossover.test.ts`
 
 ### F007 Noise source
-- status: todo | type: agent | model: haiku | deps: F000, F004 | gate: none
+- status: done | type: agent | model: haiku | deps: F000, F004 | gate: none
 - files: `src/fx/dsp/noise.ts`, `tests/fx/noise.test.ts`
 - spec: `class NoiseSource { constructor(seed = 1); white(): number` (uniform, -1..1) `; pink(): number` (Paul Kellett's economy pink filter over white, scaled to stay within about -1..1) `; reseed(seed: number): void }`. Seeded integer PRNG, no `Math.random`.
 - tests: deterministic per seed; white has mean near 0 and RMS near 0.577; pink has a clearly larger share of its energy below 200 Hz than white does (compare lowpassed RMS over total RMS, pink at least 3 times white).
