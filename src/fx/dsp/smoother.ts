@@ -2,6 +2,9 @@
 
 import { sanitize } from './math';
 
+/** Relative distance from the target at which the value snaps onto it. */
+const SNAP = 1e-9;
+
 /** One-pole exponential smoother: glides a value toward a target without clicks. */
 export class Smoother {
   #coeff: number;
@@ -32,7 +35,10 @@ export class Smoother {
   next(): number {
     const target = this.#target;
     let value = target + (this.#value - target) * this.#coeff;
-    if (Math.abs(value - target) < 1e-9) value = target;
+    // Snap when close enough. The threshold scales with the target because a large value (a
+    // delay of 24000 samples, say) otherwise stalls a few billionths short: each step becomes
+    // smaller than the spacing between neighbouring floating point numbers and rounds away.
+    if (Math.abs(value - target) < SNAP * Math.max(1, Math.abs(target))) value = target;
     this.#value = value;
     return value;
   }

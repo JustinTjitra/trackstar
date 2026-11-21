@@ -111,4 +111,28 @@ describe('Smoother', () => {
     expect(s.isSettled(1e-6)).toBe(false);
     expect(s.isSettled()).toBe(false);
   });
+
+  // A fixed snap threshold of 1e-9 stalls for large values: gliding a delay length from 18000
+  // to 14400 samples used to stop 2e-9 short for ever.
+  it.each([
+    [18000, 14400, 50],
+    [0, 24000, 50],
+    [72000, 1500, 50],
+    [0, 1e6, 20],
+    [-5e5, 5e5, 20],
+  ])('reaches a large target exactly (%f to %f, %f ms)', (from, to, ms) => {
+    const s = new Smoother(48000, ms, from);
+    s.setTarget(to);
+    for (let i = 0; i < 48000 * 3; i++) s.next();
+    expect(s.value).toBe(to);
+    expect(s.isSettled(0)).toBe(true);
+  });
+
+  it('does not snap early: one time constant in, a large glide is still on its way', () => {
+    const s = new Smoother(48000, 50, 0);
+    s.setTarget(24000);
+    for (let i = 0; i < 2400; i++) s.next();
+    expect(s.value / 24000).toBeGreaterThan(0.60);
+    expect(s.value / 24000).toBeLessThan(0.66);
+  });
 });
