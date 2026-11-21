@@ -206,11 +206,11 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/spiral.test.ts`
 
 ### F024 Reverb sweep
-- status: todo | type: agent | model: sonnet | deps: F002, F005, F009 | gate: none
+- status: done | type: agent | model: sonnet | deps: F002, F005, F009 | gate: none
 - files: `src/fx/effects/reverbSweep.ts`, `tests/fx/reverbSweep.test.ts`
 - spec: `class ReverbSweep implements StereoEffect { constructor(sampleRate: number, direction: SceneDirection); setAmount(v: number): void; process(...); reset() }`.
-  - Wet reverb level = 0.9 x amount; room size 0.5 to 0.95 with the amount. Dry at unity.
-  - The dry + wet mix then passes a filter whose cutoff follows the amount geometrically: 'up' is a high-pass from 20 Hz to 1500 Hz, 'down' is a low-pass from 18 kHz to 500 Hz. Below amount 0.001 the filter is crossfaded out so the output equals the input exactly.
+  - Wet reverb level = 0.6 x amount; room size 0.5 to 0.85 with the amount. Dry at unity. (Changed from 0.9 and 0.95 after measuring: see LOG, F024.) The signal sent into the reverb is high-passed at 120 Hz.
+  - The dry + wet mix then passes a filter whose cutoff follows the amount geometrically: 'up' is a high-pass from 20 Hz to 1500 Hz, 'down' is a low-pass from 18 kHz to 500 Hz. The filter is blended in over the first 2% of the amount, so at amount 0 the output equals the input exactly.
 - tests: identity at amount 0; 'up' at amount 1 cuts a 100 Hz sine by more than 20 dB; 'down' at amount 1 cuts an 8 kHz sine by more than 20 dB; an impulse at amount 0.7 leaves a tail (RMS from 200 to 400 ms above -50 dB); finite under noise.
 - planner note (from F009): the reverb's gain at 0 Hz is `0.72 / (1 - feedback)`, which is 4.5 at room size 0.5 and about 21 at 0.95, because all eight combs reinforce each other there. Music has little energy that low, but the brief for this task should high-pass the signal sent into the reverb (about 120 Hz, a `Biquad` or `Svf`) so bass and any offset cannot build up, and its tests should include a steady (0 Hz) input staying bounded.
 - accept: `npx vitest run tests/fx/reverbSweep.test.ts`
