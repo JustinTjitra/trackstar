@@ -234,13 +234,14 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/roll.test.ts`
 
 ### F027 Release effects
-- status: todo | type: agent | model: sonnet | deps: F010, F011, F020 | gate: none
+- status: done | type: agent | model: sonnet | deps: F010, F011, F020 | gate: none
 - files: `src/fx/effects/release.ts`, `tests/fx/release.test.ts`
 - spec: `class ReleaseFx implements StereoEffect, TempoAware { constructor(sampleRate: number, maxSeconds = 4); setBpm(bpm): void; trigger(type: ReleaseType, beats = 2): void; get active(): boolean; consumeFinished(): boolean` (true once after a release ends) `; process(...); reset() }`. Input is always recorded.
   - `brake`: plays the recording with the playback rate falling linearly from 1 to 0 over `beats` beats, with a short fade at the end. Live input is not heard.
   - `backspin`: the rate goes from 1 to -4 during the first eighth of the duration and stays there while the level fades linearly to 0 over the whole duration.
   - `echo`: live input fades out over 10 ms; an internal echo (0.5 beat, feedback 0.6) of the last audio rings out for `2 x beats` beats.
   - Afterwards the live input fades back in over 10 ms. Inactive: output equals input exactly.
+  - As built: the backspin rate goes from 1 to -4 during the first eighth and then slows linearly back to 0 while the level fades, so it reaches back 2.94 times its length instead of 4.7. The brake ends with a 30 ms fade. The echo is a feedback delay that always runs, so the tail is a true echo of the last audio; the echo fades in over the same 10 ms the live input fades out, and out over the last 10 ms. A release keeps the tempo it was triggered with. `trigger` is ignored until the live input is fully back; `beats` is clamped to 0.25..8. Playback that would pass the end of the recording fades to silence. `active` stays true during the 10 ms return; `consumeFinished` turns true when the sound ends, at the start of that return.
 - tests: identity when inactive; a brake on a 1 kHz sine lasts `beats x samplesPerBeat` within 20 ms, and the zero-crossing rate falls across four equal sub-windows; backspin ends in silence and stays finite; echo output level decays over time; after any release, output equals live input again; `consumeFinished` is true exactly once.
 - accept: `npx vitest run tests/fx/release.test.ts`
 
@@ -260,6 +261,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - spec: `class FxEngine { constructor(sampleRate: number); setBpm(bpm: number): void; setBypass(on: boolean): void; setSceneSlot(slot: SceneSlot): void; setSceneAmount(v: number): void; setIsolator(low: number, mid: number, high: number): void; rollStart(division: RollDivision): void; rollStop(): void; release(type: ReleaseType, beats?: number): void; process(l: Float32Array, r: Float32Array, frames: number): void; state(): EngineState; reset(): void }` with `interface EngineState { bypass: boolean; slot: SceneSlot; amount: number; rollActive: boolean; releaseActive: boolean; limiterGain: number; bpm: number }`.
   - Chain: sanitize input, isolator, scene, roll, release, limiter.
   - Bypass leaves the buffers untouched.
+  - Construct `ReleaseFx` with 10 seconds of recording: a 2-beat backspin reaches back 2.94 times its length, which is 8.8 s at 40 BPM.
   - When a release finishes, the scene amount returns to 0, the roll stops and the isolator returns to unity.
   - `state()` returns one reused object.
 - tests: bypass is bit-exact; neutral settings keep per-band levels within 0.5 dB of the input; after a release finishes `state().amount` is 0 and `rollActive` is false; fuzz test: 20 s of noise at 48 kHz in 128-frame blocks with seeded random calls to every setter between blocks, all output finite and within +-1; NaN and Infinity input give finite output; samples beyond `frames` are not modified.
