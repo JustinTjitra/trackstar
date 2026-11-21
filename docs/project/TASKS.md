@@ -158,7 +158,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/beatClock.test.ts`
 
 ### F011 Stereo capture buffer
-- status: todo | type: agent | model: haiku | deps: F003 | gate: none
+- status: done | type: agent | model: haiku | deps: F003 | gate: none
 - files: `src/fx/dsp/captureBuffer.ts`, `tests/fx/captureBuffer.test.ts`
 - spec: a rolling stereo recording of the most recent audio, built on two `DelayLine`s. `class CaptureBuffer { constructor(maxSamples: number); write(l: number, r: number): void; readL(ago: number): number; readR(ago: number): number` (`ago` 0 = newest, fractional allowed) `; get filled(): number` (valid samples, capped at max) `; get capacity(): number; clear(): void }`.
 - tests: reads return what was written at the right offset for both channels; `filled` counts up and caps; `clear`.
