@@ -1,0 +1,6 @@
+# Pinned on 2026-11-22. Each version was at least two weeks old on that day.
+# Licences read by the planner: build123d Apache-2.0, pytest MIT, PyYAML MIT.
+# Do NOT install CadQuery in this environment: build123d and CadQuery ship different builds of the same geometry kernel.
+build123d==0.13.0
+pytest==9.2.0
+PyYAML==6.0.3

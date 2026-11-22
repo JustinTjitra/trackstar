@@ -427,9 +427,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/display && npm run build && npm run smoke`
 
 ### S010 Hardware workspace
-- status: todo | type: agent | model: sonnet | deps: none | gate: none
+- status: done | type: agent | model: sonnet | deps: none | gate: none
 - files: `hardware/README.md`, `hardware/requirements.txt`, `hardware/params/flx2.yaml`, `hardware/params/flx4.yaml`, `hardware/params/display_bar_11in.yaml`, `hardware/trackstar_hw/__init__.py`, `hardware/trackstar_hw/params.py`, `hardware/tests/test_params.py`, `.gitignore`
 - spec: a Python workspace in its own virtual environment at `hardware/.venv` (ignored by git), with build123d and pytest pinned to exact versions that are at least two weeks old (the planner confirms the versions on PyPI and reads the build123d licence before pinning). Do not install CadQuery in the same environment. Parameter files hold published dimensions (FLX2 383.2 x 208 x 48.2 mm, FLX4 482 x 272.8 x 59.2 mm) and `null` for everything listed in H7, each with a comment saying it is unmeasured. `params.py` loads and validates them into dataclasses and refuses to build print-ready output while required measurements are null (a `draft=True` flag allows placeholder values). The README explains setup and commands.
+  - As built: pins are build123d 0.13.0, pytest 9.2.0 and PyYAML 6.0.3 (PyYAML is needed to read the parameter files; its newest release was two days old on the day, so the one before it is pinned). The display file describes the 11.26 inch 1920 x 440 bar from PROJECT.md. `load_controller` and `load_display` take `draft=True` for placeholders and list every placeholder field; without it they raise `MissingMeasurements`.
 - accept: `cd hardware && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python -m pytest`
 
 ### S011 Bridge model, first draft

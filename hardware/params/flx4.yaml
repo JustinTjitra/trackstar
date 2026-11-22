@@ -1,0 +1,18 @@
+# Pioneer DDJ-FLX4. "published" comes from the maker's specification sheet.
+# "measured" has to be taken with calipers on the real controller (task H7); null means not measured yet.
+name: DDJ-FLX4
+published:
+  width_mm: 482.0
+  depth_mm: 272.8
+  height_mm: 59.2
+  weight_kg: 2.1
+measured:
+  rear_gap_mm: null                  # unmeasured: gap between the desk and the underside at the rear edge (how thick a tongue can slide under)
+  foot_height_mm: null               # unmeasured: height of the rubber feet
+  foot_positions_mm: null            # unmeasured: list of [x, y] of each foot centre, from the rear left corner, seen from above
+  top_panel_height_mm: null          # unmeasured: height of the top panel above the desk
+  tallest_control_height_mm: null    # unmeasured: height of the tallest knob or fader cap above the desk
+  usb_c_port_mm: null                # unmeasured: {x: centre from the left edge, z: centre above the desk, width: , height: } on the rear panel
+  kensington_slot_mm: null           # unmeasured: {x: , z: , width: , height: } on the rear panel
+  left_jacks_mm: null                # unmeasured: list of {y: from the rear edge, z: above the desk, diameter: } for the two 3.5 mm jacks on the left side
+  corner_radius_mm: null             # unmeasured: corner radius of the case, top view
