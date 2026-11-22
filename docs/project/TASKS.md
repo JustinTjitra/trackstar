@@ -322,9 +322,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npm run build && npm run smoke`
 
 ### F051 Demo loop
-- status: todo | type: agent | model: sonnet | deps: F000, F004, F007, F042 | gate: none
+- status: done | type: agent | model: sonnet | deps: F000, F004, F007, F042 | gate: none
 - files: `src/fx/demo/demoLoop.ts`, `tests/fx/demoLoop.test.ts`
 - spec: `renderDemoLoop(sampleRate: number, bpm = 124, bars = 4): { l: Float32Array; r: Float32Array }`. Pure synthesis, no samples: kick on every beat (sine sweep from about 120 Hz to 45 Hz with exponential decay), closed hat on the offbeats (seeded noise through a high-pass), clap on beats 2 and 4 (noise burst), a simple bass line. Peak at -3 dBFS. The loop seam must not click.
+  - As built: bass and hats are on the offbeats, claps on beats 2 and 4, kick on every beat; kick and bass are centred, hats and claps use different noise left and right. Every sound ends before the loop does, so the loop starts on a sample of exactly 0 and ends in silence. The entry's test "first 32 samples below -40 dBFS" was dropped: the kick starts on the first beat, so only the very first sample is quiet; the seam is checked by the last 32 samples, the first sample and the step across the seam instead. `bpm` is clamped to 60..200 and `bars` to 1..16.
 - tests: length is exactly `round(bars x 4 x 60 / bpm x sampleRate)`; peak between -4 and -2.5 dBFS; deterministic; finite; the BPM detector reads the tempo within 1 BPM; first and last 32 samples are below -40 dBFS.
 - accept: `npx vitest run tests/fx/demoLoop.test.ts`
 
