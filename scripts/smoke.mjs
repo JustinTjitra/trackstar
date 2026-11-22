@@ -1,7 +1,9 @@
 // Smoke test: serves the production build and loads it in Chromium with a fake
 // camera and a fake virtual MIDI port (headless Chromium refuses real Web MIDI).
 // Walks the first-run flow, then checks rekordbox-style feedback reaches the
-// console, all without page errors.
+// console, all without page errors. A second page load (?fxtest) runs the effects
+// self-test: an offline render through the AudioWorklet node, checked for bit-exact
+// bypass, an audible effect, state messages and no processor errors.
 //
 //   npm run build && npm run smoke            (add --shot=path.png for a screenshot)
 import { createServer } from 'node:http';
@@ -118,6 +120,26 @@ try {
   }
   if (shot) await page.screenshot({ path: shot });
   console.log(`last screen: ${(await heading()) ?? 'main view'}`);
+
+  // Effects self-test: its own page, so it does not depend on the first-run flow above.
+  try {
+    const fxUrl = `http://127.0.0.1:${server.address().port}/?fxtest`;
+    const fxPage = await context.newPage();
+    fxPage.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+    fxPage.on('console', (m) => {
+      if (m.type() === 'error') errors.push(`console: ${m.text()}`);
+    });
+    await fxPage.goto(fxUrl);
+    await fxPage.waitForFunction(() => typeof window.__trackstarFxSelfTest === 'function', null, { timeout: 15_000 });
+    const fx = await fxPage.evaluate(() => window.__trackstarFxSelfTest());
+    if (!(fx.bypassMaxDiff < 1e-6)) errors.push(`fx bypass not bit-exact: max diff ${fx.bypassMaxDiff}`);
+    if (!(fx.effectRmsDiff > 0.01)) errors.push(`fx effect not audible: rms diff ${fx.effectRmsDiff}`);
+    if (fx.errors !== 0) errors.push(`fx processor reported ${fx.errors} errors`);
+    if (!(fx.stateMessages >= 5)) errors.push(`fx too few state messages: ${fx.stateMessages}`);
+    console.log(`fx self-test: bypass ${fx.bypassMaxDiff}, effect ${fx.effectRmsDiff.toFixed(4)}, ${fx.stateMessages} state messages`);
+  } catch (e) {
+    errors.push(`fx self-test failed: ${String(e.message ?? e).split('\n')[0]}`);
+  }
 } finally {
   await browser.close();
   server.close();

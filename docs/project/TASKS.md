@@ -311,13 +311,14 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/workletCore.test.ts`
 
 ### F050 Audio worklet and node factory
-- status: todo | type: agent | model: sonnet | deps: F031, F032, F042, F045 | gate: none
+- status: done | type: agent | model: sonnet | deps: F031, F032, F042, F045 | gate: none
 - files: `src/fx/worklet/processor.ts`, `src/fx/audio/node.ts`, `src/fx/audio/selfTest.ts`, `src/main.ts` (one guarded hook), `scripts/smoke.mjs`, `vite.config.ts` if the worklet bundle needs it
 - spec:
   - `processor.ts` registers an `AudioWorkletProcessor` named `trackstar-fx`. It is a thin wrapper around `FxProcessorCore` (F045), which holds all the behaviour: the wrapper builds the core with the context's sample rate, the port's `postMessage` and `processorOptions.initial`, forwards port messages to `handleMessage`, and calls `process` with the first input and first output.
   - `node.ts`: `createFxNode(ctx: BaseAudioContext): Promise<AudioWorkletNode>` loads the processor module (built by Vite as a separate file) and returns a stereo-in, stereo-out node.
   - `selfTest.ts`: `runFxSelfTest(): Promise<{ bypassMaxDiff: number; effectRmsDiff: number }>` renders one second of a 440 Hz sine through the node in an `OfflineAudioContext`, once bypassed and once with scene slot 1 at amount 0.8. Exposed as `window.__trackstarFxSelfTest` only when the URL has `?fxtest`.
   - `smoke.mjs`: a second page load with `?fxtest` asserts `bypassMaxDiff < 1e-6` and `effectRmsDiff > 0.01`.
+  - As built: `createFxNode(ctx, initial?)` takes a list of messages that are in force from the first sample. The worklet script is built by importing `processor.ts` with Vite's `?worker&url` suffix; no Vite config change was needed. The self-test also returns `stateMessages` and `errors`, and `effectRmsDiff` compares the echo render with a neutral render through the node (not with the dry tone, because the isolator's crossover shifts the phase even when neutral). The smoke test also requires no processor errors and at least 5 state messages.
 - accept: `npm run build && npm run smoke`
 
 ### F051 Demo loop

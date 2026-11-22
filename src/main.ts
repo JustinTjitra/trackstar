@@ -263,4 +263,8 @@ async function boot(): Promise<void> {
   }
 }
 
+// ?fxtest exposes the effects self-test; the effects code is only loaded when it is called.
+if (new URLSearchParams(location.search).has('fxtest')) {
+  window.__trackstarFxSelfTest = () => import('./fx/audio/selfTest').then((m) => m.runFxSelfTest());
+}
 void boot();
