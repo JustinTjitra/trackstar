@@ -412,11 +412,18 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - spec: open the main app and `display.html` in the same browser context; assert the display leaves its waiting state and shows chips matching injected MIDI feedback; assert no page errors on either page.
 - accept: `npm run build && npm run smoke`
 
-### S006 One app at a time on the deck screen
-- status: todo | type: agent | model: sonnet | deps: S005 | gate: none
-- files: `src/display/bus.ts`, `src/display/publisher.ts`, `src/display/view.ts`, `src/display/render.ts`, `src/main.ts`, and their tests
-- spec: added by the planner after S005 showed the problem. Every page that loads the app publishes its own deck state, so with the app open in two tabs (or a second copy opened with `?fxtest`) the deck screen receives two different states in turn: chips flicker, and the screen never goes stale while either copy runs. Each app page gets a random id when it starts and sends it in every message. The deck screen follows the first source it hears; a message from another source is ignored while the followed one is fresh, and taken over once the followed one has gone stale. While two sources are heard the screen shows a short notice ("Trackstar is open in two tabs"). The message format stays readable by the existing decoder (the id is an optional field), or the version goes up and both ends change together; the brief decides.
-- tests: one source behaves as before; a second source is ignored and raises the notice; the second is followed after the first goes stale; the smoke test keeps the effects self-test page open during the deck screen check and still passes.
+### S006 One app at a time: source id and the rule
+- status: done | type: agent | model: sonnet | deps: S005 | gate: none
+- files: `src/display/bus.ts`, `src/display/publisher.ts`, `src/display/source.ts`, `tests/display/bus.test.ts`, `tests/display/publisher.test.ts`, `tests/display/source.test.ts`
+- spec: added by the planner after S005 showed the problem: every page that loads the app publishes its own deck state, so with the app open in two tabs (or a second copy opened with `?fxtest`) the deck screen receives two different states in turn. This task is the testable half; S006b wires it in. The message gains two optional fields, `src` (an id made when the app page starts) and `born` (when it started). `SourceFollower` decides which messages the deck screen shows: it follows one source; of two that are both sending it prefers the one that started first (the tab that was already in use), ignores the other, and reports a conflict while both are heard; when the followed source goes quiet for 3 s it takes over the other. `newSourceId()` makes the id. The publisher forwards the two fields.
+- tests: decode accepts and validates the new fields and still reads messages without them; one source is always accepted; a newer second source is ignored and raises the conflict; an older second source takes over at once; the survivor is followed after the other goes quiet; ids differ.
+- accept: `npx vitest run tests/display`
+
+### S006b One app at a time: wire it in
+- status: todo | type: agent | model: sonnet | deps: S006 | gate: none
+- files: `src/main.ts`, `src/display/main.ts`, `src/display/view.ts`, `src/display/render.ts`, `src/display/styles.css`, `scripts/smoke.mjs`, and the view and render tests
+- spec: the app page sends its `src` and `born` in every message. The deck screen page passes every message through a `SourceFollower` and shows only the accepted ones; while the follower reports a conflict the view carries a notice ("Trackstar is open in two tabs") that the page shows as a short warning line.
+- tests: the view model and the HTML with and without the notice; the smoke test keeps the effects self-test page (a second copy of the app) open during the deck screen check: the deck screen still shows the first app's chips and the notice; closing the first app makes the deck screen take over the second; closing that one makes it go stale.
 - accept: `npx vitest run tests/display && npm run build && npm run smoke`
 
 ### S010 Hardware workspace

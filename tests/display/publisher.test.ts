@@ -201,6 +201,38 @@ describe('DisplayPublisher: what is sent', () => {
   });
 });
 
+describe('DisplayPublisher: source fields', () => {
+  it('forwards src and born', () => {
+    const { sent, at } = setup();
+    at(5, content({ src: 'a1', born: 123 }));
+    expect(sent[0]?.src).toBe('a1');
+    expect(sent[0]?.born).toBe(123);
+  });
+
+  it('sends exactly the six known keys without them, and eight with them', () => {
+    const { sent, at } = setup();
+    at(5);
+    at(100, content({ src: 'a1', born: 123 }));
+    expect(Object.keys(sent[0] as object).sort()).toEqual(['bpm', 'decks', 'fx', 'mode', 't', 'v']);
+    expect(Object.keys(sent[1] as object).sort()).toEqual(['born', 'bpm', 'decks', 'fx', 'mode', 'src', 't', 'v']);
+  });
+
+  it('counts a change of src alone as a change', () => {
+    const { sent, at } = setup();
+    at(0, content({ src: 'a1', born: 1 }));
+    at(100, content({ src: 'a2', born: 1 }));
+    expect(sent).toHaveLength(2);
+    expect(sent[1]?.src).toBe('a2');
+  });
+
+  it('counts a change of born alone as a change', () => {
+    const { sent, at } = setup();
+    at(0, content({ src: 'a1', born: 1 }));
+    at(100, content({ src: 'a1', born: 2 }));
+    expect(sent).toHaveLength(2);
+  });
+});
+
 describe('DisplayPublisher: clock', () => {
   it('does not get stuck when the clock goes backwards', () => {
     const { sent, at } = setup();

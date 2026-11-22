@@ -24,6 +24,10 @@ export interface DisplayState {
   decks: DeckSnapshot;
   fx: DisplayFxState | null;
   bpm: number | null;
+  /** Id of the app page that sent this, made when that page started. Absent in messages from older senders. */
+  src?: string;
+  /** When that app page started, in milliseconds on the sender's wall clock. Absent in messages from older senders. */
+  born?: number;
 }
 
 type Obj = Record<string, unknown>;
@@ -102,7 +106,18 @@ export function decode(raw: unknown): DisplayState | null {
     if (fx === undefined) return null;
     const bpm = x.bpm;
     if (bpm !== null && !(isFiniteNumber(bpm) && bpm > 0)) return null;
-    return { v: 1, t, mode, decks, fx, bpm };
+    const out: DisplayState = { v: 1, t, mode, decks, fx, bpm };
+    const src = x.src;
+    if (src !== undefined) {
+      if (typeof src !== 'string' || src.length < 1 || src.length > 64) return null;
+      out.src = src;
+    }
+    const born = x.born;
+    if (born !== undefined) {
+      if (!isFiniteNumber(born)) return null;
+      out.born = born;
+    }
+    return out;
   } catch {
     return null;
   }

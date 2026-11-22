@@ -465,3 +465,53 @@ describe('createBus: real BroadcastChannel in Node', () => {
     }
   });
 });
+
+describe('decode: source fields', () => {
+  it('round-trips a state with src and born, in string and object form', () => {
+    const s = state({ src: 'abc-123', born: 1_700_000_000_000 });
+    for (const input of [encode(s), s]) {
+      const out = decode(input);
+      expect(out).toEqual(s);
+      expect(out?.src).toBe('abc-123');
+      expect(out?.born).toBe(1_700_000_000_000);
+    }
+  });
+
+  it('gives a state without them neither key', () => {
+    for (const input of [encode(state()), state()]) {
+      const out = decode(input) as DisplayState;
+      expect(out).not.toBeNull();
+      expect('src' in out).toBe(false);
+      expect('born' in out).toBe(false);
+    }
+  });
+
+  it('treats src and born given as undefined as absent', () => {
+    const out = decode({ ...mutable(), src: undefined, born: undefined }) as DisplayState;
+    expect(out).not.toBeNull();
+    expect('src' in out).toBe(false);
+    expect('born' in out).toBe(false);
+  });
+
+  it('rejects an invalid src or born', () => {
+    const bad: Array<[string, Record<string, unknown>]> = [
+      ["src ''", { src: '' }],
+      ['src of 65 characters', { src: 'x'.repeat(65) }],
+      ['src 5', { src: 5 }],
+      ['src null', { src: null }],
+      ['born NaN', { born: NaN }],
+      ['born Infinity', { born: Infinity }],
+      ["born '5'", { born: '5' }],
+      ['born null', { born: null }],
+    ];
+    for (const [label, patch] of bad) {
+      expect(decode({ ...mutable(), ...patch }), label).toBeNull();
+    }
+  });
+
+  it('accepts a src of exactly 64 characters and a born of 0 or below', () => {
+    expect(decode({ ...mutable(), src: 'x'.repeat(64) })?.src).toBe('x'.repeat(64));
+    expect(decode({ ...mutable(), born: 0 })?.born).toBe(0);
+    expect(decode({ ...mutable(), born: -5 })?.born).toBe(-5);
+  });
+});

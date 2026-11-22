@@ -39,13 +39,23 @@ export class DisplayPublisher {
   /** Call this often (on every change and on a timer). It publishes only when something should be sent. */
   update(content: DisplayContent): void {
     const t = this.#now();
-    const key = JSON.stringify({ mode: content.mode, decks: content.decks, fx: content.fx, bpm: content.bpm });
+    const key = JSON.stringify({
+      mode: content.mode,
+      decks: content.decks,
+      fx: content.fx,
+      bpm: content.bpm,
+      src: content.src,
+      born: content.born,
+    });
     const changed = key !== this.#lastKey;
     let elapsed = t - this.#lastT;
     if (elapsed < 0) elapsed = Infinity;
     const due = changed ? elapsed >= this.#minIntervalMs : elapsed >= this.#heartbeatMs;
     if (!due) return;
-    this.#bus.publish({ v: 1, t, mode: content.mode, decks: content.decks, fx: content.fx, bpm: content.bpm });
+    const state: DisplayState = { v: 1, t, mode: content.mode, decks: content.decks, fx: content.fx, bpm: content.bpm };
+    if (content.src !== undefined) state.src = content.src;
+    if (content.born !== undefined) state.born = content.born;
+    this.#bus.publish(state);
     this.#lastKey = key;
     this.#lastT = t;
   }
