@@ -2,7 +2,7 @@
 
 This folder holds the Python workspace for the hardware part of Trackstar: a 3D printed bridge that holds a small bar display above a DJ controller (Pioneer DDJ-FLX2 or DDJ-FLX4). The parts will be modelled in code with the Python library build123d.
 
-Right now the folder contains only the parameter files and the code that loads and checks them. There is no 3D modelling yet.
+The folder contains the parameter files, the code that loads and checks them, and a first draft of the bridge model (see "Bridge draft" below).
 
 ## Setup
 
@@ -63,6 +63,20 @@ from trackstar_hw import load_controller
 sketch = load_controller('flx2', draft=True)   # works today
 part = load_controller('flx2')                 # raises until all values are measured
 ```
+
+## Bridge draft
+
+`trackstar_hw/bridge.py` models the bridge: two feet with a thin tongue that slides under the rear edge of the controller, two uprights, and a crossbar split into segments with half-lap joints so that every part fits the printer bed (250 mm by default). It is a first draft with placeholder dimensions. It is not print-ready and must not be printed.
+
+Build it from the `hardware` folder:
+
+```bash
+.venv/bin/python build.py --draft
+```
+
+Options: `--controller flx2|flx4|all` (default `all`), `--display display_bar_11in`, `--bed 250`, `--out out`. For each controller the script writes `<controller>_<part>.step` and `<controller>_<part>.stl` for every part, plus `<controller>_preview.svg`, into `hardware/out/` (ignored by git). It prints the size and volume of each part and ends with a `DRAFT:` line naming the placeholder fields.
+
+Without `--draft` the script prints the missing measurements to stderr, exits with code 2 and writes nothing, until the values in `params/` have been measured (task H7).
 
 ## Licences of the pinned packages
 

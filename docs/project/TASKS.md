@@ -434,9 +434,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `cd hardware && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python -m pytest`
 
 ### S011 Bridge model, first draft
-- status: todo | type: agent | model: sonnet | deps: S010 | gate: none
+- status: done | type: agent | model: sonnet | deps: S010 | gate: none
 - files: `hardware/trackstar_hw/bridge.py`, `hardware/build.py`, `hardware/tests/test_bridge.py`
 - spec: `build_bridge(controller, display, bed_mm=250, draft=True) -> dict[str, Part]`: two feet with thin tongues that slide under the controller, two uprights, and a crossbar that carries the display, split into segments that each fit the bed and join with bolts and alignment pins. Follows the design rules in PROJECT.md 4.5. `build.py` exports every part as STEP and STL into `hardware/out/` (ignored by git).
+  - As built: the bridge stands over the rear edge. Each foot is a 6 mm plate on the desk beside the controller with a 3 mm tongue reaching 45 mm under it; the uprights (14 x 24 mm) bolt to the feet and the crossbar (24 x 16 mm) bolts onto the uprights, each joint with two M3 bolts into heat-set inserts and one 3 mm alignment pin. The crossbar is cut into 2 segments for the FLX2 and 3 for the FLX4, joined by 24 mm half-laps with two bolts and a pin. The display holder is not part of this draft (S012). `build.py` also writes a line drawing, `<controller>_preview.svg`, and refuses to run without `--draft` while measurements are missing.
 - tests: every part is a valid solid; every part's largest dimension fits the bed; the assembled span clears the controller's width plus clearance; tongue thickness does not exceed the parameter; no two parts intersect in their assembled positions; both controllers build.
 - accept: `cd hardware && .venv/bin/python -m pytest && .venv/bin/python build.py --draft`
 
