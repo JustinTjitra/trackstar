@@ -388,19 +388,25 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - tests: throttling, publish on change, heartbeat.
 - accept: `npx vitest run tests/display/publisher.test.ts`
 
-### S003 Display page
-- status: todo | type: agent | model: sonnet | deps: S001 | gate: none
-- files: `display.html`, `src/display/main.ts`, `src/display/view.ts`, `src/display/styles.css`, `tests/display/view.test.ts`, `vite.config.ts`
-- spec: a second page built by Vite. `view.ts` is a pure function from `DisplayState | null` and viewport size to a view model (which layout, panel contents, stale flag when the last state is older than 3 s). Layouts: wide bar (aspect ratio 3:1 or wider: decks side by side, full height) and standard. Shows per deck: loop and stem chips with the same states as the main console, mode, BPM, clock. With no state it shows "Waiting for Trackstar" and how to open the main app. Uses the main app's palette.
-- tests: view model for null state, fresh state, stale state, and both layouts.
-- accept: `npx vitest run tests/display/view.test.ts && npm run build`
+### S003 Display view model
+- status: done | type: agent | model: sonnet | deps: S001 | gate: none
+- files: `src/display/view.ts`, `tests/display/view.test.ts`
+- spec: the testable half of the display page, split from the page itself (S003b) by the planner. `buildView(state: DisplayState | null, now: number, width: number, height: number): DisplayView` is a pure function from the last received state, the current time and the viewport size to what the page shows: which layout (wide bar when the aspect ratio is 3:1 or wider, else standard), whether it is waiting, live or stale (stale when the last state is older than 3 s), the two deck panels with loop and stem chips in the same states and with the same class names as the main console, the mode, the tempo text and the effects summary. With no state it says "Waiting for Trackstar" and how to open the main app. `formatClock(date: Date): string` gives the local time as HH:MM.
+- tests: view model for null state, fresh state, stale state, both layouts, chip states matching the main console, tempo and effects text, clock.
+- accept: `npx vitest run tests/display/view.test.ts`
+
+### S003b Display page
+- status: todo | type: agent | model: sonnet | deps: S003 | gate: none
+- files: `display.html`, `src/display/main.ts`, `src/display/styles.css`, `vite.config.ts`
+- spec: a second page built by Vite next to the main app. `src/display/main.ts` subscribes to the display bus, keeps the last state, and renders `buildView(...)` into the page on every message, on resize and once a second (for the clock and the stale flag). Uses the main app's palette and fonts. No camera, no MIDI, no audio.
+- accept: `npm run build` produces `dist/display.html`; checked end to end by S005.
 
 ### S004 Mirror mode: capture and crop
-- status: todo | type: agent | model: sonnet | deps: S003 | gate: G3
+- status: todo | type: agent | model: sonnet | deps: S003b | gate: G3
 - spec: detailed by the planner once G3 is open. Window capture with `getDisplayMedia`, crop rectangles per deck (pure mapping maths, tested), a calibration screen to drag the rectangles, saved in settings.
 
 ### S005 Smoke test for the display page
-- status: todo | type: agent | model: sonnet | deps: S002, S003 | gate: none
+- status: todo | type: agent | model: sonnet | deps: S002, S003b | gate: none
 - files: `scripts/smoke.mjs`
 - spec: open the main app and `display.html` in the same browser context; assert the display leaves its waiting state and shows chips matching injected MIDI feedback; assert no page errors on either page.
 - accept: `npm run build && npm run smoke`
