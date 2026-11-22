@@ -396,9 +396,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/display/view.test.ts`
 
 ### S003b Display page
-- status: todo | type: agent | model: sonnet | deps: S003 | gate: none
-- files: `display.html`, `src/display/main.ts`, `src/display/styles.css`, `vite.config.ts`
+- status: done | type: agent | model: sonnet | deps: S003 | gate: none
+- files: `display.html`, `src/display/main.ts`, `src/display/render.ts`, `tests/display/render.test.ts`, `src/display/styles.css`, `vite.config.ts`
 - spec: a second page built by Vite next to the main app. `src/display/main.ts` subscribes to the display bus, keeps the last state, and renders `buildView(...)` into the page on every message, on resize and once a second (for the clock and the stale flag). Uses the main app's palette and fonts. No camera, no MIDI, no audio.
+  - As built: the HTML is produced by a pure function, `renderHtml(view, clock)` in `render.ts`, which is unit tested (all text and attributes escaped, a colour written only when it is a hex colour); `main.ts` only writes the result into the page when it changed. Chips carry `data-deck` and `data-action` like the main console. The wide layout puts loops above stems with chips sized from the screen height (about 41 px text on a 1920 x 480 bar). The second page is built by listing both HTML files as Vite inputs.
 - accept: `npm run build` produces `dist/display.html`; checked end to end by S005.
 
 ### S004 Mirror mode: capture and crop
