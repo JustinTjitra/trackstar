@@ -350,7 +350,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/session.test.ts`
 
 ### F054 FX settings in config
-- status: todo | type: agent | model: haiku | deps: F001 | gate: none
+- status: done | type: agent | model: haiku | deps: F001 | gate: none
 - files: `src/config/config.ts`, `tests/config.test.ts`
 - spec: add `fx: { inputLabel: string | null; outputLabel: string | null; source: 'demo' | 'input'; releaseType: ReleaseType; releaseBeats: number; sceneSlot: SceneSlot; autoBpm: boolean }` to `Config`, with defaults `null, null, 'demo', 'brake', 2, 1, true`. `loadConfig` merges a partial stored `fx` over the defaults. Existing behaviour and tests must not change.
 - tests: defaults present; partial stored `fx` merges; round trip.
