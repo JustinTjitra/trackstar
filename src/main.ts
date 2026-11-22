@@ -4,6 +4,8 @@ import { GesturePipeline, type PipelineConfig } from './gestures/pipeline';
 import { HandTracker } from './tracking/handTracker';
 import { MidiIO, midiSupported, requestMidi, type MidiAccessLike } from './midi/io';
 import { DEFAULT_MAPPING, type MidiMapping } from './midi/mapping';
+import { createBus } from './display/bus';
+import { DisplayPublisher } from './display/publisher';
 import { DeckStore } from './state/deckStore';
 import { ACTIONS, DECKS, type Action, type Deck, type HandFrame } from './types';
 import { renderConsole } from './ui/console';
@@ -95,6 +97,13 @@ async function boot(): Promise<void> {
 
   renderConsole(consoleEl, store.snapshot());
   store.subscribe(() => renderConsole(consoleEl, store.snapshot()));
+
+  // The deck screen page (if one is open) shows the same state. Date.now is used because both pages share it.
+  const display = new DisplayPublisher(createBus(), () => Date.now());
+  const publishDisplay = () => display.update({ mode: 'deck', decks: store.snapshot(), fx: null, bpm: null });
+  store.subscribe(publishDisplay);
+  setInterval(publishDisplay, 250);
+  publishDisplay();
 
   sheet.show({ step: 'STARTING', title: 'Starting the camera', body: '<p>Your browser may ask for camera access.</p>' });
   const stream = await untilOk(sheet, () => startCamera(video), cameraError);

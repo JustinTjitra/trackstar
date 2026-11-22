@@ -381,9 +381,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/display/bus.test.ts`
 
 ### S002 Publish state from the app
-- status: todo | type: agent | model: sonnet | deps: S001 | gate: none
+- status: done | type: agent | model: sonnet | deps: S001 | gate: none
 - files: `src/display/publisher.ts`, `tests/display/publisher.test.ts`, `src/main.ts`
 - spec: `class DisplayPublisher { constructor(bus, now: () => number, minIntervalMs = 66); update(partial: Omit<DisplayState, 'v' | 't'>): void }` publishes on change, at most about 15 times a second, and at least once a second as a heartbeat. `main.ts` feeds it the deck snapshot (FX fields null until FX mode exists).
+  - As built: the publisher has no timers of its own; `main.ts` calls `update` on every change of the deck store and every 250 ms. The time in each message is `Date.now()`, because the two pages share that clock (the deck screen uses it to tell a stale state). A fourth constructor argument sets the heartbeat (default 1000 ms).
 - tests: throttling, publish on change, heartbeat.
 - accept: `npx vitest run tests/display/publisher.test.ts`
 
