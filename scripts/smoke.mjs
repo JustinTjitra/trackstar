@@ -3,7 +3,9 @@
 // Walks the first-run flow, then checks rekordbox-style feedback reaches the
 // console, all without page errors. A second page load (?fxtest) runs the effects
 // self-test: an offline render through the AudioWorklet node, checked for bit-exact
-// bypass, an audible effect, state messages and no processor errors.
+// bypass, an audible effect, state messages and no processor errors. Last, the deck
+// screen page (display.html) is opened in the same browser: it must go live and show
+// the console's chips, follow new feedback, and go stale once the app page is closed.
 //
 //   npm run build && npm run smoke            (add --shot=path.png for a screenshot)
 import { createServer } from 'node:http';
@@ -122,9 +124,10 @@ try {
   console.log(`last screen: ${(await heading()) ?? 'main view'}`);
 
   // Effects self-test: its own page, so it does not depend on the first-run flow above.
+  let fxPage;
   try {
     const fxUrl = `http://127.0.0.1:${server.address().port}/?fxtest`;
-    const fxPage = await context.newPage();
+    fxPage = await context.newPage();
     fxPage.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
     fxPage.on('console', (m) => {
       if (m.type() === 'error') errors.push(`console: ${m.text()}`);
@@ -139,6 +142,68 @@ try {
     console.log(`fx self-test: bypass ${fx.bypassMaxDiff}, effect ${fx.effectRmsDiff.toFixed(4)}, ${fx.stateMessages} state messages`);
   } catch (e) {
     errors.push(`fx self-test failed: ${String(e.message ?? e).split('\n')[0]}`);
+  } finally {
+    // The second copy of the app publishes its own (all unknown) state; close it before the deck screen check.
+    await fxPage?.close().catch(() => {});
+  }
+
+  // Deck screen: follows the running app (the main page is still open and publishing), then goes stale when it closes.
+  try {
+    const dsUrl = `http://127.0.0.1:${server.address().port}/display.html`;
+    const ds = await context.newPage();
+    await ds.setViewportSize({ width: 1920, height: 480 });
+    ds.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+    ds.on('console', (m) => {
+      if (m.type() === 'error') errors.push(`console: ${m.text()}`);
+    });
+    await ds.goto(dsUrl);
+    await ds.locator('#display.d-live').waitFor({ timeout: 5000 }).catch(() => {
+      throw new Error('deck screen did not go live within 5 s');
+    });
+    const rootCls = await ds.locator('#display').getAttribute('class');
+    if (!rootCls.split(' ').includes('d-wide')) errors.push(`deck screen layout: expected d-wide, got "${rootCls}"`);
+    const dsChips = async () => ds.locator('#display .chip').count();
+    const n = await dsChips();
+    if (n !== 12) errors.push(`deck screen: expected 12 chips, found ${n}`);
+    const dsCls = (deck, action) => ds.locator(`#display .chip[data-deck="${deck}"][data-action="${action}"]`).getAttribute('class');
+    const dsChecks = [
+      ['A', 'loop2', 'chip on'],
+      ['A', 'loop4', 'chip unknown'],
+      ['B', 'drums', 'chip muted'],
+      ['B', 'vocals', 'chip on'],
+    ];
+    for (const [deck, action, want] of dsChecks) {
+      const got = await dsCls(deck, action);
+      if (got !== want) errors.push(`deck screen ${deck} ${action}: expected "${want}", got "${got}"`);
+    }
+
+    // Live update: new feedback on the app page shows up on the deck screen.
+    await page.evaluate(() => window.__midi.emit([0x92, 65, 127]));
+    await ds
+      .waitForFunction(
+        () => document.querySelector('#display .chip[data-deck="A"][data-action="loop4"]')?.classList.contains('on'),
+        null,
+        { timeout: 3000 },
+      )
+      .catch(() => errors.push('deck screen did not follow new feedback'));
+
+    // Going stale: the app page goes away, so nothing is sent any more.
+    await page.close();
+    const wentStale = await ds
+      .locator('#display.d-stale')
+      .waitFor({ timeout: 8000 })
+      .then(() => true, () => false);
+    if (!wentStale) {
+      errors.push('deck screen did not go stale after the app closed');
+    } else {
+      const n2 = await dsChips();
+      if (n2 !== 12) errors.push(`deck screen: expected 12 chips when stale, found ${n2}`);
+      const msg = (await ds.locator('#display .d-message').textContent({ timeout: 1000 }).catch(() => null)) ?? '';
+      if (!msg.includes('stopped sending')) errors.push(`deck screen stale message: got "${msg}"`);
+    }
+    console.log('deck screen: live at 1920x480, 12 chips, follows feedback, goes stale when the app closes');
+  } catch (e) {
+    errors.push(`deck screen failed: ${String(e.message ?? e).split('\n')[0]}`);
   }
 } finally {
   await browser.close();

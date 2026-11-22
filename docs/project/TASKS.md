@@ -407,10 +407,17 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - spec: detailed by the planner once G3 is open. Window capture with `getDisplayMedia`, crop rectangles per deck (pure mapping maths, tested), a calibration screen to drag the rectangles, saved in settings.
 
 ### S005 Smoke test for the display page
-- status: todo | type: agent | model: sonnet | deps: S002, S003b | gate: none
+- status: done | type: agent | model: sonnet | deps: S002, S003b | gate: none
 - files: `scripts/smoke.mjs`
 - spec: open the main app and `display.html` in the same browser context; assert the display leaves its waiting state and shows chips matching injected MIDI feedback; assert no page errors on either page.
 - accept: `npm run build && npm run smoke`
+
+### S006 One app at a time on the deck screen
+- status: todo | type: agent | model: sonnet | deps: S005 | gate: none
+- files: `src/display/bus.ts`, `src/display/publisher.ts`, `src/display/view.ts`, `src/display/render.ts`, `src/main.ts`, and their tests
+- spec: added by the planner after S005 showed the problem. Every page that loads the app publishes its own deck state, so with the app open in two tabs (or a second copy opened with `?fxtest`) the deck screen receives two different states in turn: chips flicker, and the screen never goes stale while either copy runs. Each app page gets a random id when it starts and sends it in every message. The deck screen follows the first source it hears; a message from another source is ignored while the followed one is fresh, and taken over once the followed one has gone stale. While two sources are heard the screen shows a short notice ("Trackstar is open in two tabs"). The message format stays readable by the existing decoder (the id is an optional field), or the version goes up and both ends change together; the brief decides.
+- tests: one source behaves as before; a second source is ignored and raises the notice; the second is followed after the first goes stale; the smoke test keeps the effects self-test page open during the deck screen check and still passes.
+- accept: `npx vitest run tests/display && npm run build && npm run smoke`
 
 ### S010 Hardware workspace
 - status: todo | type: agent | model: sonnet | deps: none | gate: none
