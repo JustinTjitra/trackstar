@@ -330,9 +330,10 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/demoLoop.test.ts`
 
 ### F052 Audio device helpers
-- status: todo | type: agent | model: sonnet | deps: none | gate: none
+- status: done | type: agent | model: sonnet | deps: none | gate: none
 - files: `src/fx/audio/devices.ts`, `tests/fx/devices.test.ts`
 - spec: `interface DeviceInfo { deviceId: string; label: string; kind: 'audioinput' | 'audiooutput' }`. `pickDevice(list: DeviceInfo[], kind: DeviceInfo['kind'], savedLabel: string | null, hint: RegExp): DeviceInfo | null` (exact saved label first, then the first label matching the hint, else null). `INPUT_HINT = /blackhole|loopback|soundflower|vb-audio|cable/i`, `OUTPUT_HINT = /ddj|flx/i`. `CAPTURE_CONSTRAINTS: MediaTrackConstraints` with echo cancellation, noise suppression and auto gain control off and `channelCount: { ideal: 2 }`. `describeTrack(settings: MediaTrackSettings): { stereo: boolean; processed: boolean; sampleRate: number | null; warnings: string[] }` (warns in plain words when the input is mono or when browser processing is still on). Thin browser wrappers `listDevices(): Promise<DeviceInfo[]>` and `openInput(deviceId: string): Promise<MediaStream>`.
+  - As built: both wrappers take an optional second argument standing in for `navigator.mediaDevices`, so they are tested with fakes. `listDevices` leaves out Chrome's `default` and `communications` aliases and returns plain objects. `openInput` asks for the exact device. A missing browser API rejects with a plain sentence.
 - tests: `pickDevice` precedence; `describeTrack` warnings for mono and for processing left on; constraints object shape.
 - accept: `npx vitest run tests/fx/devices.test.ts`
 
