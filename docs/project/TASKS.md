@@ -299,11 +299,22 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - tests: click tracks at 90, 120, 128, 140 and 174 BPM read within 1 BPM after 8 s; 60 BPM clicks read as 120; noise alone has confidence under 0.3; 128 BPM clicks with noise 12 dB below still read within 1.5 BPM.
 - accept: `npx vitest run tests/fx/bpmDetector.test.ts`
 
+### F045 Processor core
+- status: done | type: agent | model: sonnet | deps: F031, F032, F041, F042 | gate: none
+- files: `src/fx/worklet/core.ts`, `tests/fx/workletCore.test.ts`
+- spec: split out of F050 by the planner so that everything the audio processor decides can be tested in Node, without a browser. `class FxProcessorCore { constructor(sampleRate: number, post: (msg: FxStateMessage | FxErrorMessage) => void, initial?: unknown); handleMessage(data: unknown): void; process(input: Float32Array[], output: Float32Array[]): void }`.
+  - Owns an `FxEngine`, an `OnsetDetector` and a `BpmDetector`. `process` copies the input to the output (mono is duplicated, no input is silence), runs the engine in place, feeds the mono mix of the input to the tempo detectors, and posts an `FxStateMessage` every 0.1 s of audio.
+  - `handleMessage` validates with `isFxMessage`; `autoBpm` (default on) is handled here, everything else goes to `applyMessage`. With auto tempo on, a detected tempo with confidence above 0.5 sets the engine tempo.
+  - `initial` is a list of messages applied in the constructor and in force at once (used for offline rendering, where messages posted later arrive at an unknown time).
+  - If anything throws, it posts one `FxErrorMessage` and from then on only copies input to output.
+- tests: pass-through when bypassed (stereo, mono, no input); equals a standalone `FxEngine` with the same settings; ten state messages per second of audio; messages reach the engine and bad ones are ignored; a 128 BPM click track is detected and applied with auto tempo on, and only reported with it off; a failing `post` switches to pass-through without throwing.
+- accept: `npx vitest run tests/fx/workletCore.test.ts`
+
 ### F050 Audio worklet and node factory
-- status: todo | type: agent | model: sonnet | deps: F031, F032, F042 | gate: none
+- status: todo | type: agent | model: sonnet | deps: F031, F032, F042, F045 | gate: none
 - files: `src/fx/worklet/processor.ts`, `src/fx/audio/node.ts`, `src/fx/audio/selfTest.ts`, `src/main.ts` (one guarded hook), `scripts/smoke.mjs`, `vite.config.ts` if the worklet bundle needs it
 - spec:
-  - `processor.ts` registers an `AudioWorkletProcessor` named `trackstar-fx`. It owns an `FxEngine`, an `OnsetDetector` and a `BpmDetector`. Messages are validated with `isFxMessage`; `autoBpm` (default on) makes detected tempo with confidence above 0.5 set the engine BPM. `process` copies input to output (mono input is duplicated, no input is silence), then runs the engine in place. It posts an `FxStateMessage` about ten times a second. If anything throws, it posts an `FxErrorMessage` once and from then on copies input to output untouched.
+  - `processor.ts` registers an `AudioWorkletProcessor` named `trackstar-fx`. It is a thin wrapper around `FxProcessorCore` (F045), which holds all the behaviour: the wrapper builds the core with the context's sample rate, the port's `postMessage` and `processorOptions.initial`, forwards port messages to `handleMessage`, and calls `process` with the first input and first output.
   - `node.ts`: `createFxNode(ctx: BaseAudioContext): Promise<AudioWorkletNode>` loads the processor module (built by Vite as a separate file) and returns a stereo-in, stereo-out node.
   - `selfTest.ts`: `runFxSelfTest(): Promise<{ bypassMaxDiff: number; effectRmsDiff: number }>` renders one second of a 440 Hz sine through the node in an `OfflineAudioContext`, once bypassed and once with scene slot 1 at amount 0.8. Exposed as `window.__trackstarFxSelfTest` only when the URL has `?fxtest`.
   - `smoke.mjs`: a second page load with `?fxtest` asserts `bypassMaxDiff < 1e-6` and `effectRmsDiff > 0.01`.
