@@ -338,13 +338,14 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/fx/devices.test.ts`
 
 ### F053 Audio session with failsafe
-- status: todo | type: agent | model: sonnet | deps: F050, F051, F052 | gate: none
+- status: done | type: agent | model: sonnet | deps: F050, F051, F052 | gate: none
 - files: `src/fx/audio/session.ts`, `tests/fx/session.test.ts`
 - spec: `class FxSession { constructor(deps?: Partial<SessionDeps>); start(opts: { source: 'demo' | { inputDeviceId: string }; outputDeviceId: string | null }): Promise<void>; stop(): Promise<void>; send(msg: FxMessage): void; onState(fn: (s: FxStateMessage) => void): () => void; onError(fn: (message: string) => void): () => void; get running(): boolean; latencyMs(): number | null }`. `SessionDeps` injects the context factory, `createFxNode`, `openInput` and `renderDemoLoop` so tests can use fakes.
   - Graph: source (looping buffer for demo, media stream for input) into the FX node into the destination.
   - The context is created with the lowest latency hint and, when an output device is given, routed to it (`sinkId` option, falling back to `setSinkId`; if neither exists, report it through `onError` and use the default output).
   - Failsafe: on an `FxErrorMessage` or a processor error event, disconnect the FX node, connect the source straight to the destination, and call `onError`. Audio must keep flowing.
   - `latencyMs` = `(baseLatency + outputLatency) x 1000`, or null when not running.
+  - As built: the output device is chosen with the context's `setSinkId` after creation (the constructor option adds nothing where that exists); a missing or failing `setSinkId` is reported through `onError` and the default output is used. `start` also takes `initial` messages, replaces a session that is already running, and can be cancelled by `stop` while it is still waiting. Added `bypassed` (true once the failsafe has taken the effects out) and `inputReport()` (what the browser gave for the live input, with warnings). The effects node module is loaded only on the first `start`. The messages shown to the user are exported constants.
 - tests (with fakes): demo start builds source, node, destination; failsafe rewires on an error message; `stop` closes the context and stops input tracks; `send` before `start` does nothing; missing `sinkId` support is reported, not thrown.
 - accept: `npx vitest run tests/fx/session.test.ts`
 
