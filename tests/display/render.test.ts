@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayState } from '../../src/display/bus';
 import { escapeHtml, renderHtml, rootClass } from '../../src/display/render';
-import { buildView, WAITING_HINT } from '../../src/display/view';
+import { buildView, CONFLICT_NOTICE, WAITING_HINT } from '../../src/display/view';
 import type { DisplayView } from '../../src/display/view';
 import type { ControlView, DeckSnapshot } from '../../src/state/deckStore';
 import { ACTIONS, DECKS } from '../../src/types';
@@ -156,6 +156,37 @@ describe('renderHtml: effects line', () => {
     expect(html).toContain('<span class="d-fx-dir">OFF</span>');
     expect(html).toContain('<span class="d-fx-amt">0%</span>');
     expect(renderHtml(live(), 'x')).not.toContain('d-fx');
+  });
+});
+
+describe('renderHtml: conflict notice', () => {
+  it('shows the notice with its text when the view has one', () => {
+    const view = live();
+    view.notice = CONFLICT_NOTICE;
+    const html = renderHtml(view, '09:05');
+    expect(html).toContain('<p class="d-notice">' + CONFLICT_NOTICE + '</p>');
+  });
+
+  it('has no notice element when the view has none', () => {
+    expect(renderHtml(live(), '09:05')).not.toContain('d-notice');
+  });
+
+  it('puts the notice after the header and before the panels', () => {
+    const view = live();
+    view.notice = CONFLICT_NOTICE;
+    const html = renderHtml(view, '09:05');
+    const n = html.indexOf('d-notice');
+    expect(html.indexOf('</header>')).toBeGreaterThan(-1);
+    expect(n).toBeGreaterThan(html.indexOf('</header>'));
+    expect(n).toBeLessThan(html.indexOf('d-decks'));
+  });
+
+  it('escapes the notice text', () => {
+    const view = live();
+    view.notice = 'two <b>tabs</b>';
+    const html = renderHtml(view, '09:05');
+    expect(html).not.toContain('<b>tabs</b>');
+    expect(html).toContain('<p class="d-notice">two &lt;b&gt;tabs&lt;/b&gt;</p>');
   });
 });
 

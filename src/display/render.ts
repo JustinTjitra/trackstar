@@ -61,6 +61,7 @@ export function renderHtml(view: DisplayView, clock: string): string {
     html += '<span class="d-bpm"><b>' + (view.bpm === null ? '--' : escapeHtml(view.bpm)) + '</b> BPM</span>';
   }
   html += '<span class="d-clock">' + escapeHtml(clock) + '</span></header>';
+  if (view.notice !== null) html += '<p class="d-notice">' + escapeHtml(view.notice) + '</p>';
   if (view.message !== null) html += '<p class="d-message">' + escapeHtml(view.message) + '</p>';
   if (view.hint !== null) html += '<p class="d-hint">' + escapeHtml(view.hint) + '</p>';
   if (view.decks.length > 0) html += '<section class="d-decks">' + view.decks.map(deckHtml).join('') + '</section>';

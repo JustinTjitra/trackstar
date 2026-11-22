@@ -17,6 +17,8 @@
 .d-clock { margin-left: auto; color: var(--fg); letter-spacing: 0.06em; }
 .d-bpm + .d-clock { margin-left: 0; }
 
+.d-notice { margin: 0; flex: none; font-family: var(--font-mono); font-size: clamp(12px, 3vh, 26px); color: var(--warn); }
+
 .d-message, .d-hint { margin: 0; flex: none; }
 .d-message { font-size: clamp(16px, 5vh, 44px); font-weight: 600; }
 .d-hint { font-size: clamp(12px, 3vh, 28px); color: var(--muted); }

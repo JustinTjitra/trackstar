@@ -5,17 +5,20 @@ import './styles.css';
 import { createBus } from './bus';
 import type { DisplayState } from './bus';
 import { renderHtml, rootClass } from './render';
+import { SourceFollower } from './source';
 import { buildView, formatClock } from './view';
 
 const root = document.getElementById('display');
 
 if (root) {
+  const follower = new SourceFollower();
   let last: DisplayState | null = null;
   let lastClass = root.className;
   let lastHtml = root.innerHTML;
 
   const paint = (): void => {
-    const view = buildView(last, Date.now(), window.innerWidth, window.innerHeight);
+    const now = Date.now();
+    const view = buildView(last, now, window.innerWidth, window.innerHeight, follower.conflict(now));
     const html = renderHtml(view, formatClock(new Date()));
     const cls = rootClass(view);
     if (cls !== lastClass) {
@@ -29,7 +32,8 @@ if (root) {
   };
 
   createBus().subscribe((state) => {
-    last = state;
+    const now = Date.now();
+    if (follower.offer(state, now)) last = state;
     paint();
   });
   window.addEventListener('resize', paint);

@@ -6,6 +6,7 @@ import { MidiIO, midiSupported, requestMidi, type MidiAccessLike } from './midi/
 import { DEFAULT_MAPPING, type MidiMapping } from './midi/mapping';
 import { createBus } from './display/bus';
 import { DisplayPublisher } from './display/publisher';
+import { newSourceId } from './display/source';
 import { DeckStore } from './state/deckStore';
 import { ACTIONS, DECKS, type Action, type Deck, type HandFrame } from './types';
 import { renderConsole } from './ui/console';
@@ -100,7 +101,9 @@ async function boot(): Promise<void> {
 
   // The deck screen page (if one is open) shows the same state. Date.now is used because both pages share it.
   const display = new DisplayPublisher(createBus(), () => Date.now());
-  const publishDisplay = () => display.update({ mode: 'deck', decks: store.snapshot(), fx: null, bpm: null });
+  // Which copy of the app this is, so a deck screen can tell two open tabs apart; the one that started first wins.
+  const displaySource = { src: newSourceId(), born: Date.now() };
+  const publishDisplay = () => display.update({ mode: 'deck', decks: store.snapshot(), fx: null, bpm: null, ...displaySource });
   store.subscribe(publishDisplay);
   setInterval(publishDisplay, 250);
   publishDisplay();

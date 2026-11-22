@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayState } from '../../src/display/bus';
-import { buildView, formatClock, STALE_AFTER_MS, WAITING_HINT, WAITING_MESSAGE } from '../../src/display/view';
+import { buildView, CONFLICT_NOTICE, formatClock, STALE_AFTER_MS, WAITING_HINT, WAITING_MESSAGE } from '../../src/display/view';
 import type { DisplayView } from '../../src/display/view';
 import viewSource from '../../src/display/view.ts?raw';
 import type { ControlView, DeckSnapshot } from '../../src/state/deckStore';
@@ -51,6 +51,7 @@ describe('buildView: waiting', () => {
       bpm: null,
       decks: [],
       fx: null,
+      notice: null,
     });
     expect(WAITING_MESSAGE).toBe('Waiting for Trackstar');
     expect(WAITING_HINT).toBe('Open the Trackstar app in another tab of this browser.');
@@ -246,6 +247,31 @@ describe('buildView: effects summary', () => {
 
   it('is null without effects', () => {
     expect(buildView(state({ fx: null }), T, 1280, 720).fx).toBeNull();
+  });
+});
+
+describe('buildView: conflict notice', () => {
+  it('has the notice for a live state when there is a conflict', () => {
+    const v = buildView(state(), T + 100, 1280, 720, true);
+    expect(v.status).toBe('live');
+    expect(v.notice).toBe(CONFLICT_NOTICE);
+    expect(CONFLICT_NOTICE).toBe('Trackstar is open in two tabs. Showing the one that was opened first.');
+  });
+
+  it('has the notice for a stale state when there is a conflict', () => {
+    const v = buildView(state(), T + 9000, 1280, 720, true);
+    expect(v.status).toBe('stale');
+    expect(v.notice).toBe(CONFLICT_NOTICE);
+  });
+
+  it('never has a notice while waiting', () => {
+    expect(buildView(null, 0, 1280, 720, true).notice).toBeNull();
+  });
+
+  it('has no notice when the argument is left out or false', () => {
+    expect(buildView(state(), T, 1280, 720).notice).toBeNull();
+    expect(buildView(state(), T, 1280, 720, false).notice).toBeNull();
+    expect(buildView(state(), T + 9000, 1280, 720, false).notice).toBeNull();
   });
 });
 

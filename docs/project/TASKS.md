@@ -420,7 +420,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 - accept: `npx vitest run tests/display`
 
 ### S006b One app at a time: wire it in
-- status: todo | type: agent | model: sonnet | deps: S006 | gate: none
+- status: done | type: agent | model: sonnet | deps: S006 | gate: none
 - files: `src/main.ts`, `src/display/main.ts`, `src/display/view.ts`, `src/display/render.ts`, `src/display/styles.css`, `scripts/smoke.mjs`, and the view and render tests
 - spec: the app page sends its `src` and `born` in every message. The deck screen page passes every message through a `SourceFollower` and shows only the accepted ones; while the follower reports a conflict the view carries a notice ("Trackstar is open in two tabs") that the page shows as a short warning line.
 - tests: the view model and the HTML with and without the notice; the smoke test keeps the effects self-test page (a second copy of the app) open during the deck screen check: the deck screen still shows the first app's chips and the notice; closing the first app makes the deck screen take over the second; closing that one makes it go stale.

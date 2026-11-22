@@ -54,6 +54,8 @@ export interface DisplayView {
   decks: DeckPanelView[];
   /** The effects summary; null when the state has none or while waiting. */
   fx: FxView | null;
+  /** A warning line; null when there is nothing to warn about. */
+  notice: string | null;
 }
 
 /** A state older than this many milliseconds is stale. */
@@ -64,6 +66,9 @@ export const WIDE_ASPECT = 3;
 export const WAITING_MESSAGE = 'Waiting for Trackstar';
 /** The instruction shown before any state arrived. */
 export const WAITING_HINT = 'Open the Trackstar app in another tab of this browser.';
+
+/** The warning shown when two copies of the app are open. */
+export const CONFLICT_NOTICE = 'Trackstar is open in two tabs. Showing the one that was opened first.';
 
 function layoutFor(width: number, height: number): DisplayLayout {
   const ok = Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
@@ -90,8 +95,8 @@ function fxView(fx: DisplayFxState): FxView {
   };
 }
 
-/** Turns the last received state, the current time and the screen size into what the page shows. */
-export function buildView(state: DisplayState | null, now: number, width: number, height: number): DisplayView {
+/** Turns the last received state, the current time and the screen size into what the page shows. `conflict` adds the two-tabs notice to a state. */
+export function buildView(state: DisplayState | null, now: number, width: number, height: number, conflict = false): DisplayView {
   const layout = layoutFor(width, height);
   if (state === null) {
     return {
@@ -103,6 +108,7 @@ export function buildView(state: DisplayState | null, now: number, width: number
       bpm: null,
       decks: [],
       fx: null,
+      notice: null,
     };
   }
   let age = now - state.t;
@@ -123,6 +129,7 @@ export function buildView(state: DisplayState | null, now: number, width: number
       stems: chips(STEM_ACTIONS, deck, state.decks),
     })),
     fx: state.fx === null ? null : fxView(state.fx),
+    notice: conflict ? CONFLICT_NOTICE : null,
   };
 }
 
