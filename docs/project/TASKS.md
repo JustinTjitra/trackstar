@@ -374,7 +374,7 @@ All paths are relative to the repository root. Acceptance commands are run in ad
 ## Phase 2: Deck Screen
 
 ### S001 Display state bus
-- status: todo | type: agent | model: sonnet | deps: none | gate: none
+- status: done | type: agent | model: sonnet | deps: none | gate: none
 - files: `src/display/bus.ts`, `tests/display/bus.test.ts`
 - spec: `interface DisplayState { v: 1; t: number; mode: 'deck' | 'fx'; decks: DeckSnapshot; fx: { slot: number; amount: number; rollActive: boolean; releaseActive: boolean; bypass: boolean } | null; bpm: number | null }`. `encode(state: DisplayState): string`, `decode(raw: unknown): DisplayState | null` (validates version and shape, returns null on anything unexpected). `createBus(factory?: (name: string) => ChannelLike): { publish(state: DisplayState): void; subscribe(fn: (s: DisplayState) => void): () => void; close(): void }` over `BroadcastChannel` named `trackstar-display`, with the channel injected for tests.
 - tests: round trip; malformed and wrong-version input gives null; publish reaches subscribers through a fake channel; unsubscribe and close.
