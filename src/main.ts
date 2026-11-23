@@ -4,6 +4,9 @@ import { GesturePipeline, type PipelineConfig } from './gestures/pipeline';
 import { HandTracker } from './tracking/handTracker';
 import { MidiIO, midiSupported, requestMidi, type MidiAccessLike } from './midi/io';
 import { DEFAULT_MAPPING, type MidiMapping } from './midi/mapping';
+import { createBus } from './display/bus';
+import { DisplayPublisher } from './display/publisher';
+import { newSourceId } from './display/source';
 import { DeckStore } from './state/deckStore';
 import { ACTIONS, DECKS, type Action, type Deck, type HandFrame } from './types';
 import { renderConsole } from './ui/console';
@@ -95,6 +98,15 @@ async function boot(): Promise<void> {
 
   renderConsole(consoleEl, store.snapshot());
   store.subscribe(() => renderConsole(consoleEl, store.snapshot()));
+
+  // The deck screen page (if one is open) shows the same state. Date.now is used because both pages share it.
+  const display = new DisplayPublisher(createBus(), () => Date.now());
+  // Which copy of the app this is, so a deck screen can tell two open tabs apart; the one that started first wins.
+  const displaySource = { src: newSourceId(), born: Date.now() };
+  const publishDisplay = () => display.update({ mode: 'deck', decks: store.snapshot(), fx: null, bpm: null, ...displaySource });
+  store.subscribe(publishDisplay);
+  setInterval(publishDisplay, 250);
+  publishDisplay();
 
   sheet.show({ step: 'STARTING', title: 'Starting the camera', body: '<p>Your browser may ask for camera access.</p>' });
   const stream = await untilOk(sheet, () => startCamera(video), cameraError);
@@ -263,4 +275,8 @@ async function boot(): Promise<void> {
   }
 }
 
+// ?fxtest exposes the effects self-test; the effects code is only loaded when it is called.
+if (new URLSearchParams(location.search).has('fxtest')) {
+  window.__trackstarFxSelfTest = () => import('./fx/audio/selfTest').then((m) => m.runFxSelfTest());
+}
 void boot();

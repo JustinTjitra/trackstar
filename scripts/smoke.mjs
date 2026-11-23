@@ -1,7 +1,13 @@
 // Smoke test: serves the production build and loads it in Chromium with a fake
 // camera and a fake virtual MIDI port (headless Chromium refuses real Web MIDI).
 // Walks the first-run flow, then checks rekordbox-style feedback reaches the
-// console, all without page errors.
+// console, all without page errors. A second page load (?fxtest) runs the effects
+// self-test: an offline render through the AudioWorklet node, checked for bit-exact
+// bypass, an audible effect, state messages and no processor errors; that page stays
+// open as a second copy of the app. Last, the deck screen page (display.html) is opened
+// in the same browser: it must go live and show the first page's chips while ignoring
+// the second copy, say that two copies are open, follow new feedback, take over the
+// second copy when the first page closes, and go stale once that one closes too.
 //
 //   npm run build && npm run smoke            (add --shot=path.png for a screenshot)
 import { createServer } from 'node:http';
@@ -118,6 +124,142 @@ try {
   }
   if (shot) await page.screenshot({ path: shot });
   console.log(`last screen: ${(await heading()) ?? 'main view'}`);
+
+  // Effects self-test: its own page, so it does not depend on the first-run flow above.
+  let fxPage;
+  try {
+    const fxUrl = `http://127.0.0.1:${server.address().port}/?fxtest`;
+    fxPage = await context.newPage();
+    fxPage.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+    fxPage.on('console', (m) => {
+      if (m.type() === 'error') errors.push(`console: ${m.text()}`);
+    });
+    await fxPage.goto(fxUrl);
+    await fxPage.waitForFunction(() => typeof window.__trackstarFxSelfTest === 'function', null, { timeout: 15_000 });
+    const fx = await fxPage.evaluate(() => window.__trackstarFxSelfTest());
+    if (!(fx.bypassMaxDiff < 1e-6)) errors.push(`fx bypass not bit-exact: max diff ${fx.bypassMaxDiff}`);
+    if (!(fx.effectRmsDiff > 0.01)) errors.push(`fx effect not audible: rms diff ${fx.effectRmsDiff}`);
+    if (fx.errors !== 0) errors.push(`fx processor reported ${fx.errors} errors`);
+    if (!(fx.stateMessages >= 5)) errors.push(`fx too few state messages: ${fx.stateMessages}`);
+    console.log(`fx self-test: bypass ${fx.bypassMaxDiff}, effect ${fx.effectRmsDiff.toFixed(4)}, ${fx.stateMessages} state messages`);
+  } catch (e) {
+    errors.push(`fx self-test failed: ${String(e.message ?? e).split('\n')[0]}`);
+  }
+
+  // Deck screen, while the second copy of the app (fxPage) is still open: it must ignore that copy (the main page is
+  // older, so it wins) and say that two copies are open. Then it follows feedback, takes over the remaining copy when
+  // the main page closes, and goes stale when that one closes too.
+  try {
+    const dsUrl = `http://127.0.0.1:${server.address().port}/display.html`;
+    const ds = await context.newPage();
+    await ds.setViewportSize({ width: 1920, height: 480 });
+    ds.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+    ds.on('console', (m) => {
+      if (m.type() === 'error') errors.push(`console: ${m.text()}`);
+    });
+    await ds.goto(dsUrl);
+    await ds.locator('#display.d-live').waitFor({ timeout: 5000 }).catch(() => {
+      throw new Error('deck screen did not go live within 5 s');
+    });
+    const rootCls = await ds.locator('#display').getAttribute('class');
+    if (!rootCls.split(' ').includes('d-wide')) errors.push(`deck screen layout: expected d-wide, got "${rootCls}"`);
+    const dsChips = async () => ds.locator('#display .chip').count();
+    const n = await dsChips();
+    if (n !== 12) errors.push(`deck screen: expected 12 chips, found ${n}`);
+    // The second copy's first message may arrive before the main page's: wait until the main page's state is shown.
+    await ds
+      .waitForFunction(
+        () => document.querySelector('#display .chip[data-deck="A"][data-action="loop2"]')?.classList.contains('on'),
+        null,
+        { timeout: 5000 },
+      )
+      .catch(() => errors.push('deck screen did not show the main page feedback while a second copy is open'));
+    const dsCls = (deck, action) => ds.locator(`#display .chip[data-deck="${deck}"][data-action="${action}"]`).getAttribute('class');
+    const dsChecks = [
+      ['A', 'loop2', 'chip on'],
+      ['A', 'loop4', 'chip unknown'],
+      ['B', 'drums', 'chip muted'],
+      ['B', 'vocals', 'chip on'],
+    ];
+    for (const [deck, action, want] of dsChecks) {
+      const got = await dsCls(deck, action);
+      if (got !== want) errors.push(`deck screen ${deck} ${action}: expected "${want}", got "${got}"`);
+    }
+
+    // The notice: two copies are sending.
+    await ds
+      .waitForFunction(() => document.querySelector('#display .d-notice')?.textContent?.includes('two tabs'), null, { timeout: 5000 })
+      .catch(() => {
+        throw new Error('deck screen did not report two open copies');
+      });
+
+    // No flicker: both copies publish about once a second, so watch the main page's chip for 2.5 s (a window that
+    // proves an absence cannot be a wait for a condition). Any sample that is not "on" means the other copy leaked in.
+    const flicker = await ds.evaluate(
+      () =>
+        new Promise((resolve) => {
+          let bad = 0;
+          const t0 = Date.now();
+          const id = setInterval(() => {
+            const el = document.querySelector('#display .chip[data-deck="A"][data-action="loop2"]');
+            if (el?.className !== 'chip on') bad += 1;
+            if (Date.now() - t0 >= 2500) {
+              clearInterval(id);
+              resolve(bad);
+            }
+          }, 20);
+        }),
+    );
+    if (flicker > 0) errors.push(`deck screen flickered: the second copy was shown in ${flicker} samples`);
+
+    // Live update: new feedback on the app page shows up on the deck screen.
+    await page.evaluate(() => window.__midi.emit([0x92, 65, 127]));
+    await ds
+      .waitForFunction(
+        () => document.querySelector('#display .chip[data-deck="A"][data-action="loop4"]')?.classList.contains('on'),
+        null,
+        { timeout: 3000 },
+      )
+      .catch(() => errors.push('deck screen did not follow new feedback'));
+
+    // Take-over: the main page goes away, so the deck screen follows the second copy (all controls unknown).
+    await page.close();
+    await ds
+      .waitForFunction(
+        () => document.querySelector('#display .chip[data-deck="A"][data-action="loop2"]')?.className === 'chip unknown',
+        null,
+        { timeout: 8000 },
+      )
+      .catch(() => {
+        throw new Error('deck screen did not take over the remaining copy');
+      });
+    await ds
+      .waitForFunction(() => !document.querySelector('#display .d-notice'), null, { timeout: 5000 })
+      .catch(() => {
+        throw new Error('deck screen still reports two copies');
+      });
+    const liveCls = await ds.locator('#display').getAttribute('class');
+    if (!liveCls.split(' ').includes('d-live')) errors.push(`deck screen after take-over: expected d-live, got "${liveCls}"`);
+
+    // Going stale: the last copy goes away, so nothing is sent any more.
+    await fxPage?.close().catch(() => {});
+    const wentStale = await ds
+      .locator('#display.d-stale')
+      .waitFor({ timeout: 8000 })
+      .then(() => true, () => false);
+    if (!wentStale) {
+      errors.push('deck screen did not go stale after the app closed');
+    } else {
+      const n2 = await dsChips();
+      if (n2 !== 12) errors.push(`deck screen: expected 12 chips when stale, found ${n2}`);
+      const msg = (await ds.locator('#display .d-message').textContent({ timeout: 1000 }).catch(() => null)) ?? '';
+      if (!msg.includes('stopped sending')) errors.push(`deck screen stale message: got "${msg}"`);
+    }
+    console.log('deck screen: live at 1920x480, 12 chips, ignores a second copy and says so, follows feedback, takes over, goes stale');
+  } catch (e) {
+    errors.push(`deck screen failed: ${String(e.message ?? e).split('\n')[0]}`);
+  }
+  await fxPage?.close().catch(() => {});
 } finally {
   await browser.close();
   server.close();

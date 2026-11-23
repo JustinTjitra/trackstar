@@ -1,0 +1,69 @@
+/* The deck screen layout. The palette and the chip states come from src/ui/styles.css. */
+
+.d-root {
+  position: fixed; inset: 0; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui);
+  padding: clamp(8px, 2vh, 24px) clamp(10px, 1.6vw, 32px); gap: clamp(6px, 1.6vh, 20px);
+}
+
+.d-top {
+  display: flex; align-items: baseline; gap: clamp(14px, 2.4vw, 48px); flex: none;
+  font-family: var(--font-mono); font-size: clamp(14px, 4.4vh, 40px);
+}
+.d-brand { font-weight: 600; letter-spacing: 0.2em; color: var(--muted); }
+.d-mode { padding: 0 0.6em; border: 2px solid var(--armed); border-radius: 0.3em; color: var(--armed); letter-spacing: 0.1em; }
+.d-bpm { margin-left: auto; color: var(--muted); }
+.d-bpm b { color: var(--fg); font-size: 1.3em; }
+.d-clock { margin-left: auto; color: var(--fg); letter-spacing: 0.06em; }
+.d-bpm + .d-clock { margin-left: 0; }
+
+.d-notice { margin: 0; flex: none; font-family: var(--font-mono); font-size: clamp(12px, 3vh, 26px); color: var(--warn); }
+
+.d-message, .d-hint { margin: 0; flex: none; }
+.d-message { font-size: clamp(16px, 5vh, 44px); font-weight: 600; }
+.d-hint { font-size: clamp(12px, 3vh, 28px); color: var(--muted); }
+
+.d-decks { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px, 1.6vw, 28px); }
+.d-deck {
+  min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: space-evenly;
+  gap: clamp(6px, 1.6vh, 20px); padding: clamp(8px, 2vh, 24px) clamp(10px, 1.4vw, 28px);
+  background: var(--panel-solid); border: 1px solid var(--line); border-top: clamp(3px, 0.9vh, 8px) solid var(--c, var(--line));
+  border-radius: 14px;
+}
+.d-deck-title {
+  display: flex; align-items: center; gap: 0.5em; font-family: var(--font-mono); font-weight: 600;
+  letter-spacing: 0.14em; font-size: clamp(14px, 4.4vh, 40px);
+}
+.d-deck-title i { width: 0.7em; height: 0.7em; border-radius: 3px; background: var(--c, var(--dim)); display: inline-block; }
+.d-grp { display: grid; gap: clamp(4px, 1vh, 12px); }
+.d-grp-label { font-family: var(--font-mono); font-size: clamp(10px, 2.4vh, 22px); letter-spacing: 0.14em; color: var(--muted); }
+.d-row { display: flex; gap: clamp(6px, 1vw, 16px); flex-wrap: wrap; }
+
+.d-root .chip {
+  font-size: clamp(14px, 5vh, 44px); padding: 0.3em 0.7em; border-radius: 0.3em; border-width: 2px;
+}
+
+/* The bar layout is short and very wide: loops above stems, with chips as tall as the height allows. */
+.d-root.d-wide .chip { font-size: clamp(16px, 8.5vh, 64px); }
+.d-wide .d-row { flex-wrap: nowrap; }
+
+@media (orientation: portrait) {
+  .d-standard .d-decks { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+}
+
+.d-fx {
+  flex: none; display: flex; align-items: baseline; gap: clamp(12px, 2vw, 40px);
+  font-family: var(--font-mono); font-size: clamp(13px, 3.6vh, 32px); color: var(--muted);
+}
+.d-fx-slot { color: var(--fg); font-weight: 600; }
+.d-fx-amt { color: var(--fg); }
+.d-flag { color: var(--dim); border: 1px solid var(--line); border-radius: 0.3em; padding: 0 0.5em; }
+.d-flag.on { color: #0a0c11; background: var(--armed); border-color: var(--armed); font-weight: 600; }
+
+.d-stale .d-decks { opacity: 0.35; }
+.d-stale .d-message { color: var(--warn); }
+
+.d-waiting { justify-content: flex-start; }
+.d-waiting .d-message, .d-waiting .d-hint { text-align: center; }
+.d-waiting .d-message { margin-top: auto; font-size: clamp(24px, 9vh, 96px); }
+.d-waiting .d-hint { margin-bottom: auto; font-size: clamp(14px, 4vh, 40px); }

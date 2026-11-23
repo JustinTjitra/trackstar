@@ -1,0 +1,14 @@
+# 11.26 inch 1920 x 440 bar display (the recommended tier in docs/project/PROJECT.md).
+# "nominal" is what the listing says. "measured" has to be taken on the unit that is bought (task H7).
+name: 11.26 inch 1920x440 bar display
+nominal:
+  diagonal_in: 11.26
+  resolution_px: [1920, 440]
+measured:
+  outer_width_mm: null               # unmeasured: outer width of the whole unit
+  outer_height_mm: null              # unmeasured: outer height of the whole unit
+  thickness_mm: null                 # unmeasured: thickness at the thickest point
+  active_width_mm: null              # unmeasured: width of the lit area
+  active_height_mm: null             # unmeasured: height of the lit area
+  connector_positions_mm: null       # unmeasured: list of {name: , x: , y: , width: , height: } seen from the back, from the bottom left corner
+  mounting_holes_mm: null            # unmeasured: list of [x, y] seen from the back, from the bottom left corner, plus the thread (for example M3)

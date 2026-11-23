@@ -3,3 +3,7 @@ dist/
 public/mediapipe/
 *.log
 .DS_Store
+hardware/.venv/
+hardware/out/
+__pycache__/
+.pytest_cache/
